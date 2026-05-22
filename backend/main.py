@@ -53,7 +53,7 @@ APP_URL   = os.getenv("APP_URL", "http://localhost:8000")
 TZ_NAME   = os.getenv("TIMEZONE", "Asia/Kolkata")
 TZ        = pytz.timezone(TZ_NAME)
 
-DB_PATH = "/data/examai.db"
+DB_PATH = "examai.db"
 UNLOCK_REQUIRED_ATTEMPTS  = 20
 UNLOCK_REQUIRED_ACCURACY  = 70
 REQUIRED_SUB_ATTEMPTS     = 5
