@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ExamAI — Your Intelligent Study Partner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #050a14;
+  --bg2:      #090f1e;
+  --bg3:      #0d1628;
+  --surface:  #0f1e32;
+  --surface2: #152540;
+  --border:   #1e3352;
+  --cyan:     #00e5ff;
+  --cyan2:    #00b8d4;
+  --green:    #00ff88;
+  --yellow:   #ffd700;
+  --red:      #ff2d6e;
+  --purple:   #a855f7;
+  --text:     #d0eeff;
+  --text2:    #6a9ab8;
+  --text3:    #3a5a78;
+  --radius:   12px;
+  --radius2:  20px;
+  --shadow:   0 8px 32px rgba(0,229,255,.08);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+::selection{background:rgba(0,229,255,.25);color:#fff}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* ── TYPOGRAPHY ───────────────────────────────────────────────────────────── */
+h1,h2,h3{font-family:'Syne',sans-serif;line-height:1.2}
+.mono{font-family:'Space Mono',monospace}
+
+/* ── UTILITY ──────────────────────────────────────────────────────────────── */
+.hidden{display:none!important}
+.flex{display:flex}
+.flex-col{display:flex;flex-direction:column}
+.gap-1{gap:.5rem}
+.gap-2{gap:1rem}
+.gap-3{gap:1.5rem}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.text-cyan{color:var(--cyan)}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-yellow{color:var(--yellow)}
+.text-muted{color:var(--text2)}
+.text-sm{font-size:.85rem}
+.text-xs{font-size:.75rem}
+.font-bold{font-weight:700}
+.rounded{border-radius:var(--radius)}
+.rounded-full{border-radius:99px}
+.w-full{width:100%}
+.p-4{padding:1rem}
+.mt-1{margin-top:.5rem}
+.mt-2{margin-top:1rem}
+.mt-3{margin-top:1.5rem}
+.mb-2{margin-bottom:1rem}
+
+/* ── GRID NOISE BACKGROUND ─────────────────────────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 15% 20%, rgba(0,229,255,.04) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 80%, rgba(168,85,247,.04) 0%, transparent 70%),
+    linear-gradient(rgba(30,51,82,.15) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(30,51,82,.15) 1px,transparent 1px);
+  background-size:auto,auto,40px 40px,40px 40px;
+}
+
+/* ── PAGE WRAPPER ─────────────────────────────────────────────────────────── */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── TOAST ────────────────────────────────────────────────────────────────── */
+#toast-container{
+  position:fixed;top:1.5rem;right:1.5rem;z-index:9999;
+  display:flex;flex-direction:column;gap:.5rem;
+}
+.toast{
+  padding:.75rem 1.25rem;border-radius:var(--radius);
+  font-size:.9rem;font-weight:500;max-width:320px;
+  animation:slideIn .3s ease forwards;
+  backdrop-filter:blur(12px);border:1px solid;
+}
+.toast-success{background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.3);color:#a0ffd0}
+.toast-error{background:rgba(255,45,110,.12);border-color:rgba(255,45,110,.3);color:#ffa0b8}
+.toast-info{background:rgba(0,229,255,.10);border-color:rgba(0,229,255,.25);color:var(--text)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── MODAL ────────────────────────────────────────────────────────────────── */
+#modal-overlay{
+  position:fixed;inset:0;z-index:900;
+  background:rgba(5,10,20,.85);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  animation:fadeIn .2s ease;
+}
+#modal-overlay.hidden{display:none!important}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);
+  padding:2rem;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;
+  animation:scaleIn .25s ease;
+}
+@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── NAV ──────────────────────────────────────────────────────────────────── */
+#nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,10,20,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:.9rem 2rem;
+  display:flex;align-items:center;gap:1rem;
+}
+.nav-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;cursor:pointer;white-space:nowrap;
+}
+.nav-tabs{display:flex;gap:.25rem;flex:1;overflow-x:auto;padding-bottom:2px}
+.nav-tabs::-webkit-scrollbar{height:0}
+.nav-tab{
+  padding:.45rem .9rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;
+  color:var(--text2);border:none;background:transparent;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.nav-tab:hover{color:var(--text);background:var(--surface)}
+.nav-tab.active{color:var(--cyan);background:rgba(0,229,255,.1)}
+.nav-user{
+  display:flex;align-items:center;gap:.75rem;margin-left:auto;flex-shrink:0;
+}
+.xp-pill{
+  font-family:'Space Mono',monospace;font-size:.75rem;
+  background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);
+  color:var(--yellow);padding:.3rem .6rem;border-radius:99px;
+}
+.coins-pill{
+  font-family:'Space Mono',monospace;font-size:.75rem;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);
+  color:var(--cyan);padding:.3rem .6rem;border-radius:99px;
+}
+.btn-logout{
+  padding:.4rem .9rem;border-radius:99px;font-size:.8rem;
+  background:rgba(255,45,110,.1);border:1px solid rgba(255,45,110,.3);
+  color:#ff8fa8;cursor:pointer;transition:all .2s;
+}
+.btn-logout:hover{background:rgba(255,45,110,.2)}
+
+/* ── PAGES ────────────────────────────────────────────────────────────────── */
+.page{display:none;flex:1;padding:2rem;max-width:1200px;margin:0 auto;width:100%}
+.page.active{display:block}
+
+/* ── AUTH PAGE ────────────────────────────────────────────────────────────── */
+#page-auth{
+  max-width:440px;margin:6vh auto;padding:2rem;
+  display:flex;flex-direction:column;gap:1.5rem;
+}
+.auth-hero{text-align:center;margin-bottom:1rem}
+.auth-hero h1{font-size:2.5rem;margin-bottom:.5rem}
+.auth-hero p{color:var(--text2)}
+.auth-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:2rem;
+}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.auth-tab{
+  flex:1;padding:.75rem;text-align:center;cursor:pointer;
+  font-weight:600;color:var(--text2);border:none;background:transparent;
+  border-bottom:2px solid transparent;transition:all .2s;
+}
+.auth-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* ── FORM ELEMENTS ────────────────────────────────────────────────────────── */
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+.form-group label{font-size:.85rem;font-weight:500;color:var(--text2)}
+.form-input{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.75rem 1rem;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:.95rem;width:100%;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.form-input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+.form-input::placeholder{color:var(--text3)}
+select.form-input{cursor:pointer}
+
+/* ── BUTTONS ──────────────────────────────────────────────────────────────── */
+.btn{
+  padding:.75rem 1.5rem;border-radius:99px;font-weight:600;font-size:.9rem;
+  cursor:pointer;border:none;transition:all .25s;display:inline-flex;
+  align-items:center;justify-content:center;gap:.5rem;
+}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{
+  background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+  color:#000;
+}
+.btn-primary:hover:not(:disabled){
+  box-shadow:0 0 20px rgba(0,229,255,.35);transform:translateY(-1px);
+}
+.btn-secondary{
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+}
+.btn-secondary:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan)}
+.btn-danger{background:rgba(255,45,110,.15);border:1px solid rgba(255,45,110,.3);color:#ff8fa8}
+.btn-danger:hover:not(:disabled){background:rgba(255,45,110,.25)}
+.btn-sm{padding:.45rem .9rem;font-size:.82rem}
+.btn-icon{padding:.5rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
+.btn-icon:hover{border-color:var(--cyan);color:var(--cyan)}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── CARD ─────────────────────────────────────────────────────────────────── */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:1.5rem;
+  transition:border-color .2s,box-shadow .2s;
+}
+.card:hover{border-color:rgba(0,229,255,.2);box-shadow:var(--shadow)}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:.75rem}
+
+/* ── STAT BADGE ───────────────────────────────────────────────────────────── */
+.stat-badge{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem;text-align:center;
+}
+.stat-value{font-family:'Space Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--cyan)}
+.stat-label{font-size:.75rem;color:var(--text2);margin-top:.25rem}
+
+/* ── CHAPTER CARD ─────────────────────────────────────────────────────────── */
+.chapter-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:1.25rem;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden;
+}
+.chapter-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,229,255,.04),transparent);
+  opacity:0;transition:opacity .25s;
+}
+.chapter-card:hover::after{opacity:1}
+.chapter-card.locked{opacity:.5;cursor:not-allowed}
+.chapter-card.complete{border-color:rgba(0,255,136,.3)}
+.chapter-card.weak{border-color:rgba(255,45,110,.25)}
+.chapter-status-badge{
+  font-size:.7rem;padding:.2rem .6rem;border-radius:99px;font-weight:600;
+  font-family:'Space Mono',monospace;letter-spacing:.04em;
+}
+.status-untouched{background:rgba(106,154,184,.15);color:var(--text2)}
+.status-weak{background:rgba(255,45,110,.15);color:#ff8fa8}
+.status-moderate{background:rgba(255,215,0,.15);color:var(--yellow)}
+.status-strong{background:rgba(0,255,136,.12);color:var(--green)}
+.status-complete{background:linear-gradient(135deg,rgba(0,255,136,.2),rgba(0,229,255,.15));color:var(--green)}
+.progress-bar{height:4px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.75rem}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s ease;background:linear-gradient(90deg,var(--cyan),var(--cyan2))}
+
+/* ── QUESTION ─────────────────────────────────────────────────────────────── */
+.question-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:2rem;
+}
+.question-text{font-size:1.1rem;font-weight:500;line-height:1.7;margin-bottom:1.5rem}
+.options-grid{display:flex;flex-direction:column;gap:.75rem}
+.option-btn{
+  display:flex;align-items:center;gap:1rem;
+  padding:1rem 1.25rem;border-radius:var(--radius);
+  background:var(--surface);border:1.5px solid var(--border);
+  color:var(--text);cursor:pointer;text-align:left;
+  transition:all .2s;font-size:.95rem;
+}
+.option-btn:hover:not(.answered){border-color:var(--cyan);background:rgba(0,229,255,.06)}
+.option-btn.selected{border-color:var(--cyan);background:rgba(0,229,255,.1)}
+.option-btn.correct{border-color:var(--green);background:rgba(0,255,136,.1);color:var(--green)}
+.option-btn.wrong{border-color:var(--red);background:rgba(255,45,110,.1);color:#ff8fa8}
+.option-btn.answered{cursor:default}
+.option-label{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;
+  background:var(--border);color:var(--text2);transition:all .2s;
+}
+.option-btn.correct .option-label{background:var(--green);color:#000}
+.option-btn.wrong .option-label{background:var(--red);color:#fff}
+.option-btn.selected:not(.answered) .option-label{background:var(--cyan);color:#000}
+.explanation-box{
+  margin-top:1.25rem;padding:1rem 1.25rem;
+  background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);
+  border-radius:var(--radius);font-size:.9rem;line-height:1.65;color:var(--text2);
+}
+.explanation-box strong{color:var(--cyan)}
+
+/* ── TIMER ────────────────────────────────────────────────────────────────── */
+.timer-badge{
+  font-family:'Space Mono',monospace;font-size:1rem;
+  padding:.4rem .9rem;border-radius:99px;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);
+  color:var(--cyan);transition:all .3s;
+}
+.timer-badge.warning{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--yellow)}
+.timer-badge.danger{background:rgba(255,45,110,.1);border-color:rgba(255,45,110,.3);color:var(--red);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── PROGRESS INDICATOR ───────────────────────────────────────────────────── */
+.progress-dots{display:flex;gap:4px;flex-wrap:wrap}
+.progress-dot{width:10px;height:10px;border-radius:50%;background:var(--surface2);transition:all .3s}
+.progress-dot.done-correct{background:var(--green)}
+.progress-dot.done-wrong{background:var(--red)}
+.progress-dot.current{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+
+/* ── ANALYTICS ────────────────────────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem}
+.accuracy-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.accuracy-ring svg{transform:rotate(-90deg)}
+.accuracy-ring-text{position:absolute;text-align:center}
+
+/* ── ACHIEVEMENT BADGE ────────────────────────────────────────────────────── */
+.achievement-card{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.75rem 1rem;
+  transition:all .2s;
+}
+.achievement-card:hover{border-color:rgba(255,215,0,.3);background:rgba(255,215,0,.04)}
+.ach-icon{font-size:1.5rem;flex-shrink:0}
+.ach-info{flex:1}
+.ach-name{font-weight:600;font-size:.9rem}
+.ach-desc{font-size:.75rem;color:var(--text2)}
+.ach-xp{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--yellow)}
+
+/* ── XP BAR ────────────────────────────────────────────────────────────────── */
+.xp-bar-wrap{
+  background:var(--surface2);border-radius:99px;height:8px;overflow:hidden;
+  position:relative;
+}
+.xp-bar-fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple));
+  transition:width .8s ease;
+}
+
+/* ── COACH ────────────────────────────────────────────────────────────────── */
+.chat-container{
+  display:flex;flex-direction:column;gap:.75rem;
+  max-height:400px;overflow-y:auto;padding:1rem;
+  background:var(--bg);border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+.chat-msg{
+  max-width:82%;padding:.75rem 1rem;border-radius:var(--radius);
+  font-size:.9rem;line-height:1.6;
+}
+.chat-msg.user{
+  align-self:flex-end;
+  background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.2);
+  color:var(--text);
+}
+.chat-msg.coach{
+  align-self:flex-start;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);
+}
+.chat-input-row{display:flex;gap:.5rem;margin-top:.75rem}
+.chat-input{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.65rem 1rem;color:var(--text);
+  font-family:'DM Sans',sans-serif;outline:none;
+}
+.chat-input:focus{border-color:var(--cyan)}
+
+/* ── LEADERBOARD ──────────────────────────────────────────────────────────── */
+.lb-row{
+  display:flex;align-items:center;gap:1rem;
+  padding:.75rem 1rem;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--border);
+  transition:all .2s;
+}
+.lb-row:hover{border-color:rgba(0,229,255,.2)}
+.lb-row.me{border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.06)}
+.lb-rank{
+  font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;
+  width:32px;text-align:center;flex-shrink:0;
+}
+.lb-rank-1{color:var(--yellow)}
+.lb-rank-2{color:#c0c0c0}
+.lb-rank-3{color:#cd7f32}
+.avatar{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.9rem;color:#000;
+}
+
+/* ── DIFFICULTY PILL ──────────────────────────────────────────────────────── */
+.diff-easy{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+.diff-medium{background:rgba(255,215,0,.12);color:var(--yellow);border:1px solid rgba(255,215,0,.25)}
+.diff-hard{background:rgba(255,45,110,.12);color:#ff8fa8;border:1px solid rgba(255,45,110,.25)}
+.diff-pill{font-size:.72rem;padding:.15rem .5rem;border-radius:99px;font-weight:600;font-family:'Space Mono',monospace}
+
+/* ── DIVIDER ──────────────────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);margin:1.25rem 0}
+
+/* ── SETUP WIZARD ─────────────────────────────────────────────────────────── */
+.setup-step{display:none}
+.setup-step.active{display:block}
+.chapter-chip{
+  padding:.45rem .85rem;border-radius:99px;font-size:.82rem;font-weight:500;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  cursor:grab;transition:all .2s;user-select:none;
+}
+.chapter-chip:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ── GLOBAL TEST ──────────────────────────────────────────────────────────── */
+.global-test-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:1.5rem;
+  transition:all .25s;
+}
+.global-test-card:hover{border-color:rgba(0,229,255,.25);box-shadow:var(--shadow)}
+.status-badge{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-size:.75rem;padding:.25rem .65rem;border-radius:99px;font-weight:600;
+  font-family:'Space Mono',monospace;
+}
+.status-live{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.3);animation:pulseLive 2s infinite}
+.status-lobby{background:rgba(255,215,0,.12);color:var(--yellow);border:1px solid rgba(255,215,0,.3)}
+.status-ended{background:rgba(106,154,184,.12);color:var(--text2);border:1px solid var(--border)}
+.status-draft{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+@keyframes pulseLive{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.3)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
+
+/* ── LATENCY CHART ────────────────────────────────────────────────────────── */
+.bar-chart{display:flex;gap:6px;align-items:flex-end;height:100px;padding:0 .25rem}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar-fill{width:100%;background:linear-gradient(180deg,var(--cyan),var(--cyan2));border-radius:4px 4px 0 0;min-height:4px;transition:height .5s ease}
+.bar-label{font-size:.65rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40px;text-align:center}
+
+/* ── STREAK INDICATOR ─────────────────────────────────────────────────────── */
+.streak-flame{font-size:1.2rem}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+@media(max-width:768px){
+  #nav{padding:.75rem 1rem}
+  .page{padding:1rem}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr}
+  .modal-box{padding:1.25rem}
+}
+@media(max-width:480px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .nav-tabs{display:none}
+  .question-text{font-size:1rem}
+}
+
+/* ── LOADER ───────────────────────────────────────────────────────────────── */
+.loader{
+  display:flex;align-items:center;justify-content:center;
+  padding:3rem;flex-direction:column;gap:1rem;
+}
+.loader-ring{
+  width:44px;height:44px;border:3px solid var(--border);
+  border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;
+}
+
+/* ── SECTION HEADER ───────────────────────────────────────────────────────── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;
+}
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.35rem}
+
+/* ── EMPTY STATE ──────────────────────────────────────────────────────────── */
+.empty-state{
+  text-align:center;padding:3rem;color:var(--text2);
+}
+.empty-state .empty-icon{font-size:3rem;margin-bottom:1rem}
+.empty-state p{font-size:.95rem}
+
+/* ── TAB GROUP ────────────────────────────────────────────────────────────── */
+.tab-group{
+  display:flex;gap:.25rem;padding:.3rem;
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);margin-bottom:1.5rem;
+  overflow-x:auto;
+}
+.tab-btn{
+  flex:1;padding:.5rem 1rem;border-radius:8px;
+  border:none;background:transparent;color:var(--text2);
+  font-weight:500;font-size:.88rem;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.tab-btn.active{background:var(--bg2);color:var(--cyan);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── ALERT BOX ────────────────────────────────────────────────────────────── */
+.alert{padding:1rem;border-radius:var(--radius);font-size:.9rem;display:flex;gap:.75rem;align-items:flex-start}
+.alert-info{background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.2);color:var(--text)}
+.alert-warn{background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);color:var(--text)}
+.alert-err{background:rgba(255,45,110,.07);border:1px solid rgba(255,45,110,.2);color:var(--text)}
+.alert-ok{background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);color:var(--text)}
+
+/* ── COACHING TRIGGER BANNER ──────────────────────────────────────────────── */
+.coaching-banner{
+  padding:1rem 1.5rem;
+  background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(0,229,255,.08));
+  border:1px solid rgba(168,85,247,.3);border-radius:var(--radius);
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  margin-top:1rem;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- NAV -->
+  <nav id="nav" class="hidden">
+    <div class="nav-logo" onclick="navigate('dashboard')">⚡ ExamAI</div>
+    <div class="nav-tabs" id="nav-tabs"></div>
+    <div class="nav-user" id="nav-user"></div>
+  </nav>
+
+  <!-- TOAST -->
+  <div id="toast-container"></div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="hidden" onclick="closeModalOutside(event)">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+
+  <!-- ── AUTH PAGE ─────────────────────────────────── -->
+  <div id="page-auth">
+    <div class="auth-hero">
+      <h1 class="text-cyan">⚡ ExamAI</h1>
+      <p>Your intelligent exam preparation partner</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <!-- Login -->
+      <div id="auth-login">
+        <div class="form-group"><label>Email</label><input type="email" id="login-email" class="form-input" placeholder="you@example.com"/></div>
+        <div class="form-group"><label>Password</label><input type="password" id="login-pass" class="form-input" placeholder="••••••••"/></div>
+        <button class="btn btn-primary w-full" id="btn-login" onclick="doLogin()">Sign In</button>
+      </div>
+      <!-- Register -->
+      <div id="auth-register" class="hidden">
+        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" class="form-input" placeholder="Your Name"/></div>
+        <div class="form-group"><label>Email</label><input type="email" id="reg-email" class="form-input" placeholder="you@example.com"/></div>
+        <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="reg-pass" class="form-input" placeholder="••••••••"/></div>
+        <button class="btn btn-primary w-full" id="btn-reg" onclick="doRegister()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETUP WIZARD ────────────────────────────── -->
+  <div id="page-setup" class="page">
+    <div style="max-width:600px;margin:0 auto">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">🎯 Setup Your Exam</h2>
+          <p class="text-muted text-sm">Tell us what you're preparing for</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <label>Exam Type</label>
+          <select id="setup-exam-type" class="form-input" onchange="updateExamTypeUI()">
+            <option value="">Select an exam...</option>
+            <option value="UPSC">UPSC Civil Services</option>
+            <option value="JEE">JEE (Engineering)</option>
+            <option value="NEET">NEET (Medical)</option>
+            <option value="GATE">GATE</option>
+            <option value="CAT">CAT (MBA)</option>
+            <option value="Custom">Custom Subject</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Goal / Additional Info <span class="text-muted">(optional)</span></label>
+          <input type="text" id="setup-goal" class="form-input" placeholder="e.g. Target top 100 rank, focus on Mains"/>
+        </div>
+        <div id="setup-custom-chapters-wrap" class="hidden">
+          <div class="form-group">
+            <label>Custom Chapters <span class="text-muted">(comma-separated, min 3)</span></label>
+            <textarea id="setup-custom-chapters" class="form-input" rows="4" placeholder="Chapter 1, Chapter 2, Chapter 3..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" id="btn-setup" onclick="doSetup()">🚀 Generate My Syllabus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ──────────────────────────────────── -->
+  <div id="page-dashboard" class="page">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title" id="dash-greeting">Good morning!</h2>
+        <p class="text-muted text-sm" id="dash-subtitle">Ready to study?</p>
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-secondary btn-sm" onclick="showDailyChallenge()">⚡ Daily Challenge</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('daily-test')">📝 Daily Test</button>
+      </div>
+    </div>
+    <div class="grid-4 mb-2" id="dash-stats"></div>
+    <div class="card mb-2" id="dash-xp-card"></div>
+    <div class="card mb-2" id="dash-insight-card">
+      <div class="card-title">🧠 AI Coach Insight</div>
+      <div id="dash-insight"><div class="loader"><div class="loader-ring"></div></div></div>
+    </div>
+    <div class="section-header mt-3">
+      <div class="section-title">📚 Chapters</div>
+      <button class="btn btn-secondary btn-sm" onclick="navigate('chapters')">View All →</button>
+    </div>
+    <div id="dash-chapters" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>
+  </div>
+
+  <!-- ── CHAPTERS PAGE ───────────────────────────── -->
+  <div id="page-chapters" class="page">
+    <div class="section-header">
+      <h2 class="section-title">📚 My Chapters</h2>
+    </div>
+    <div id="chapters-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem"></div>
+  </div>
+
+  <!-- ── CHAPTER DETAIL PAGE ────────────────────── -->
+  <div id="page-chapter-detail" class="page">
+    <div class="section-header">
+      <div>
+        <button class="btn btn-secondary btn-sm mb-2" onclick="navigate('chapters')">← Back</button>
+        <h2 class="section-title" id="chapter-detail-title"></h2>
+      </div>
+    </div>
+    <div class="tab-group">
+      <button class="tab-btn active" onclick="switchTab('chapter',this,'lesson')">📖 Lesson</button>
+      <button class="tab-btn" onclick="switchTab('chapter',this,'subtopics')">🗂 Sub-Topics</button>
+      <button class="tab-btn" onclick="switchTab('chapter',this,'practice')">✏️ Practice</button>
+    </div>
+    <div id="chapter-tab-lesson" class="tab-panel active"></div>
+    <div id="chapter-tab-subtopics" class="tab-panel"></div>
+    <div id="chapter-tab-practice" class="tab-panel"></div>
+  </div>
+
+  <!-- ── DAILY TEST PAGE ─────────────────────────── -->
+  <div id="page-daily-test" class="page">
+    <div id="daily-test-content"></div>
+  </div>
+
+  <!-- ── WEAK SESSION PAGE ──────────────────────── -->
+  <div id="page-weak-session" class="page">
+    <div id="weak-session-content"></div>
+  </div>
+
+  <!-- ── DYNAMIC MODE PAGE ──────────────────────── -->
+  <div id="page-dynamic" class="page">
+    <div id="dynamic-content"></div>
+  </div>
+
+  <!-- ── COACH PAGE ─────────────────────────────── -->
+  <div id="page-coach" class="page">
+    <div style="max-width:800px;margin:0 auto">
+      <div class="section-header">
+        <h2 class="section-title">🎓 AI Coach</h2>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary btn-sm" onclick="loadLatencyCoach()">⏱ Speed Coach</button>
+        </div>
+      </div>
+      <div id="coach-daily-insight" class="card mb-2"></div>
+      <div class="card">
+        <div class="card-title">Chat with your coach</div>
+        <div class="chat-container" id="coach-chat-messages"></div>
+        <div class="chat-input-row mt-2">
+          <input type="text" class="chat-input" id="coach-input" placeholder="Ask anything about your exam..." onkeydown="if(event.key==='Enter')sendCoachMessage()"/>
+          <button class="btn btn-primary btn-sm" onclick="sendCoachMessage()">Send →</button>
+        </div>
+      </div>
+      <div class="card mt-3">
+        <div class="card-title">📌 Questions You Struggled With</div>
+        <div id="failed-questions-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ANALYTICS PAGE ─────────────────────────── -->
+  <div id="page-analytics" class="page">
+    <div class="section-header">
+      <h2 class="section-title">📊 Analytics</h2>
+      <button class="btn btn-secondary btn-sm" onclick="loadAnalytics()">↻ Refresh</button>
+    </div>
+    <div id="analytics-content"><div class="loader"><div class="loader-ring"></div></div></div>
+  </div>
+
+  <!-- ── GLOBAL TESTS PAGE ──────────────────────── -->
+  <div id="page-global-tests" class="page">
+    <div class="section-header">
+      <h2 class="section-title">🌍 Global Tests</h2>
+      <button class="btn btn-secondary btn-sm" onclick="loadGlobalTests()">↻ Refresh</button>
+    </div>
+    <div id="global-tests-list"><div class="loader"><div class="loader-ring"></div></div></div>
+  </div>
+
+  <!-- ── GLOBAL TEST ROOM ────────────────────────── -->
+  <div id="page-global-test-room" class="page">
+    <div id="global-test-room-content"></div>
+  </div>
+
+  <!-- ── PROFILE PAGE ───────────────────────────── -->
+  <div id="page-profile" class="page">
+    <div style="max-width:700px;margin:0 auto">
+      <div class="section-header">
+        <h2 class="section-title">👤 Profile</h2>
+      </div>
+      <div id="profile-content"><div class="loader"><div class="loader-ring"></div></div></div>
+    </div>
+  </div>
+
+  <!-- ── BOOKMARKS PAGE ─────────────────────────── -->
+  <div id="page-bookmarks" class="page">
+    <div class="section-header">
+      <h2 class="section-title">🔖 Bookmarks</h2>
+    </div>
+    <div id="bookmarks-content"><div class="loader"><div class="loader-ring"></div></div></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── CONFIG ─────────────────────────────────────────────────────────────── */
+const API = '';
+let TOKEN = localStorage.getItem('examai_token');
+let USER  = JSON.parse(localStorage.getItem('examai_user') || 'null');
+let currentPage = '';
+
+/* ── API HELPER ─────────────────────────────────────────────────────────── */
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(API + path, opts);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || ('Error ' + r.status));
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+const GET  = function(p)    { return api('GET',  p); };
+const POST = function(p, b) { return api('POST', p, b); };
+const PUT  = function(p, b) { return api('PUT',  p, b); };
+
+/* ── TOAST ──────────────────────────────────────────────────────────────── */
+function toast(msg, type, dur) {
+  type = type || 'info';
+  dur  = dur  || 4000;
+  var el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(function() { el.remove(); }, dur);
+}
+
+/* ── MODAL ──────────────────────────────────────────────────────────────── */
+function openModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+/* ── NAVIGATION ─────────────────────────────────────────────────────────── */
+function navigate(page, data) {
+  data = data || {};
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var el = document.getElementById('page-' + page);
+  if (el) {
+    el.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.nav-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.page === page);
+  });
+  var loaders = {
+    'dashboard':        loadDashboard,
+    'chapters':         loadChapters,
+    'daily-test':       loadDailyTest,
+    'weak-session':     loadWeakSession,
+    'dynamic':          loadDynamic,
+    'coach':            loadCoach,
+    'analytics':        loadAnalytics,
+    'global-tests':     loadGlobalTests,
+    'profile':          loadProfile,
+    'bookmarks':        loadBookmarks,
+  };
+  if (loaders[page]) loaders[page](data);
+}
+
+/* ── AUTH ────────────────────────────────────────────────────────────────── */
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(function(t, i) {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.getElementById('auth-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('auth-register').classList.toggle('hidden', tab !== 'register');
+}
+
+async function doLogin() {
+  var email    = document.getElementById('login-email').value.trim();
+  var password = document.getElementById('login-pass').value;
+  if (!email || !password) return toast('Fill in email and password', 'error');
+  var btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⏳</span> Signing in...';
+  try {
+    var data = await POST('/api/auth/login', { email: email, password: password });
+    TOKEN = data.token; USER = data.user;
+    localStorage.setItem('examai_token', TOKEN);
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    afterLogin();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Sign In'; }
+}
+
+async function doRegister() {
+  var name     = document.getElementById('reg-name').value.trim();
+  var email    = document.getElementById('reg-email').value.trim();
+  var password = document.getElementById('reg-pass').value;
+  if (!name || !email || !password) return toast('All fields required', 'error');
+  var btn = document.getElementById('btn-reg');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⏳</span> Creating account...';
+  try {
+    var data = await POST('/api/auth/register', { name: name, email: email, password: password });
+    TOKEN = data.token; USER = data.user;
+    localStorage.setItem('examai_token', TOKEN);
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    afterLogin();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+}
+
+function afterLogin() {
+  document.getElementById('page-auth').style.display = 'none';
+  document.getElementById('nav').classList.remove('hidden');
+  buildNav();
+  if (!USER.setup_done) {
+    navigate('setup');
+  } else {
+    navigate('dashboard');
+  }
+}
+
+async function doLogout() {
+  try { await POST('/api/auth/logout'); } catch(e) {}
+  TOKEN = null; USER = null;
+  localStorage.removeItem('examai_token');
+  localStorage.removeItem('examai_user');
+  document.getElementById('page-auth').style.display = '';
+  document.getElementById('nav').classList.add('hidden');
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+}
+
+/* ── NAV BUILD ───────────────────────────────────────────────────────────── */
+var NAV_ITEMS = [
+  {page:'dashboard',    label:'🏠 Home'},
+  {page:'chapters',     label:'📚 Chapters'},
+  {page:'daily-test',   label:'📝 Daily Test'},
+  {page:'weak-session', label:'⚡ Weak Areas'},
+  {page:'dynamic',      label:'🌀 Dynamic'},
+  {page:'coach',        label:'🎓 Coach'},
+  {page:'global-tests', label:'🌍 Global'},
+  {page:'analytics',    label:'📊 Analytics'},
+  {page:'bookmarks',    label:'🔖 Bookmarks'},
+  {page:'profile',      label:'👤 Profile'},
+];
+function buildNav() {
+  var tabs = document.getElementById('nav-tabs');
+  tabs.innerHTML = NAV_ITEMS.map(function(n) {
+    return '<button class="nav-tab" data-page="' + n.page + '" onclick="navigate(\'' + n.page + '\')">' + n.label + '</button>';
+  }).join('');
+  renderNavUser();
+}
+function renderNavUser() {
+  if (!USER) return;
+  document.getElementById('nav-user').innerHTML =
+    '<span class="xp-pill">Lv.' + (USER.level || 1) + '</span>' +
+    '<span class="coins-pill">🪙 ' + (USER.coins || 0) + '</span>' +
+    '<span class="text-muted text-sm">' + escHtml(USER.name) + '</span>' +
+    '<button class="btn-logout" onclick="doLogout()">Logout</button>';
+}
+
+/* ── SETUP ───────────────────────────────────────────────────────────────── */
+function updateExamTypeUI() {
+  var et = document.getElementById('setup-exam-type').value;
+  document.getElementById('setup-custom-chapters-wrap').classList.toggle('hidden', et !== 'Custom');
+}
+
+async function doSetup() {
+  var exam_type = document.getElementById('setup-exam-type').value;
+  if (!exam_type) return toast('Please select an exam type', 'error');
+  var exam_goal = document.getElementById('setup-goal').value.trim();
+  var btn = document.getElementById('btn-setup');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⏳</span> Generating syllabus...';
+  var body = { exam_type: exam_type, exam_goal: exam_goal };
+  if (exam_type === 'Custom') {
+    var raw = document.getElementById('setup-custom-chapters').value;
+    var chapters = raw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    if (chapters.length < 3) {
+      toast('Enter at least 3 chapters', 'error');
+      btn.disabled = false; btn.textContent = '🚀 Generate';
+      return;
+    }
+    body.custom_chapters = chapters;
+  }
+  try {
+    var data = await POST('/api/exam/setup', body);
+    USER.setup_done = true; USER.exam_type = exam_type;
+    USER.chapters = data.chapters;
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    toast('✅ ' + data.chapters.length + ' chapters generated!', 'success');
+    navigate('dashboard');
+  } catch(e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '🚀 Generate My Syllabus'; }
+}
+
+/* ── DASHBOARD ───────────────────────────────────────────────────────────── */
+async function loadDashboard() {
+  if (!USER) return;
+  var hour = new Date().getHours();
+  /* FIX: was  'Good morning':'hour<17?'Good afternoon':'Good evening'  */
+  var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  /* FIX: was  greet<12  (comparing a string) — must be  hour<12  */
+  var emoji = hour < 12 ? '🌅' : hour < 17 ? '☀️' : '🌙';
+  document.getElementById('dash-greeting').textContent = emoji + ' ' + greet + ', ' + USER.name + '!';
+
+  try {
+    var p = await GET('/api/user/profile');
+    USER = Object.assign({}, USER, p);
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    renderNavUser();
+
+    var stats = p.stats || {};
+    document.getElementById('dash-stats').innerHTML = [
+      {v: stats.total_attempted || 0,          l: 'Questions Done', icon: '📝'},
+      {v: (stats.overall_accuracy || 0) + '%', l: 'Accuracy',       icon: '🎯'},
+      {v: stats.study_streak || 0,             l: 'Day Streak',     icon: '🔥'},
+      {v: p.coins || 0,                        l: 'Coins',          icon: '🪙'},
+    ].map(function(s) {
+      return '<div class="stat-badge"><div class="stat-value">' + s.v + '</div><div class="stat-label">' + s.icon + ' ' + s.l + '</div></div>';
+    }).join('');
+
+    var xpPct = p.xp_progress || 0;
+    document.getElementById('dash-xp-card').innerHTML =
+      '<div class="flex items-center justify-between mb-2">' +
+        '<span class="card-title">⭐ Level ' + p.level + '</span>' +
+        '<span class="mono text-sm text-cyan">' + p.xp + ' XP</span>' +
+      '</div>' +
+      '<div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:' + xpPct + '%"></div></div>' +
+      '<div class="flex justify-between mt-1 text-xs text-muted">' +
+        '<span>' + xpPct + '% to next level</span>' +
+        (p.xp_for_next ? '<span>Need: ' + p.xp_for_next + ' XP</span>' : '<span>Max Level!</span>') +
+      '</div>';
+  } catch(e) { console.error(e); }
+
+  try {
+    var ins = await GET('/api/coach/daily-insight');
+    document.getElementById('dash-insight').textContent = ins.insight || 'Keep going!';
+  } catch(e) {
+    document.getElementById('dash-insight').textContent = 'Start your daily test to get personalized insights!';
+  }
+
+  loadChaptersPreview();
+}
+
+async function loadChaptersPreview() {
+  try {
+    var data = await GET('/api/exam/chapters');
+    var chapters = (data.chapters || []).slice(0, 6);
+    document.getElementById('dash-chapters').innerHTML = chapters.map(function(ch) {
+      return renderChapterCard(ch, true);
+    }).join('');
+  } catch(e) {}
+}
+
+/* ── CHAPTERS ─────────────────────────────────────────────────────────────── */
+async function loadChapters() {
+  document.getElementById('chapters-grid').innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Loading chapters...</span></div>';
+  try {
+    var data = await GET('/api/exam/chapters');
+    var chapters = data.chapters || [];
+    if (!chapters.length) {
+      document.getElementById('chapters-grid').innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><p>No chapters yet. Complete exam setup first.</p></div>';
+      return;
+    }
+    document.getElementById('chapters-grid').innerHTML = chapters.map(function(ch) {
+      return renderChapterCard(ch);
+    }).join('');
+  } catch(e) {
+    document.getElementById('chapters-grid').innerHTML = '<div class="empty-state"><p class="text-red">' + escHtml(e.message) + '</p></div>';
+  }
+}
+
+function renderChapterCard(ch, small) {
+  small = small || false;
+  var statusClass = 'status-' + ch.status;
+  var lock = !ch.unlocked ? '🔒 ' : '';
+  var pct  = ch.attempted > 0 ? Math.round(ch.accuracy) : 0;
+  var clickHandler = ch.unlocked
+    ? 'openChapterDetail(\'' + escHtml(ch.name).replace(/'/g, "\\'") + '\')'
+    : 'toast(\'Complete previous chapter to unlock\',\'info\')';
+  return '<div class="chapter-card ' + (!ch.unlocked ? 'locked' : '') + ' ' + (ch.complete ? 'complete' : ch.status === 'weak' ? 'weak' : '') + '" onclick="' + clickHandler + '">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-sm text-muted">Chapter ' + (ch.index + 1) + '</span>' +
+      '<span class="chapter-status-badge ' + statusClass + '">' + lock + ch.status.toUpperCase() + '</span>' +
+    '</div>' +
+    '<div class="font-bold" style="font-family:\'Syne\',sans-serif">' + escHtml(ch.name) + '</div>' +
+    '<div class="flex gap-2 mt-2 text-xs text-muted">' +
+      '<span>📝 ' + ch.total_questions + ' Qs</span>' +
+      '<span>✅ ' + ch.attempted + ' done</span>' +
+      '<span>🎯 ' + ch.accuracy + '%</span>' +
+    '</div>' +
+    '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+    (ch.subs_total > 0 ? '<div class="text-xs text-muted mt-1">Sub-topics: ' + ch.subs_practiced + '/' + ch.subs_total + ' practiced</div>' : '') +
+  '</div>';
+}
+
+/* ── CHAPTER DETAIL ──────────────────────────────────────────────────────── */
+var currentChapter = null;
+var chapterQuestions = [];
+var chapterAnswers = {};
+var chapterTimings = {};
+var chapterStartTimes = {};
+
+async function openChapterDetail(chapterName) {
+  currentChapter = chapterName;
+  chapterAnswers = {};
+  chapterTimings = {};
+  chapterQuestions = [];
+  document.getElementById('chapter-detail-title').textContent = chapterName;
+  navigate('chapter-detail');
+  document.querySelectorAll('#page-chapter-detail .tab-btn').forEach(function(b, i) {
+    b.classList.toggle('active', i === 0);
+  });
+  document.querySelectorAll('#page-chapter-detail .tab-panel').forEach(function(p, i) {
+    p.classList.toggle('active', i === 0);
+  });
+  loadChapterLesson(chapterName);
+}
+
+async function loadChapterLesson(chapter) {
+  var el = document.getElementById('chapter-tab-lesson');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Generating lesson...</span></div>';
+  try {
+    var data = await GET('/api/chapters/' + encodeURIComponent(chapter) + '/lesson');
+    el.innerHTML = '<div class="card"><div style="white-space:pre-wrap;line-height:1.8;font-size:.95rem">' + escHtml(data.content) + '</div>' +
+      (data.used_web ? '<div class="text-xs text-muted mt-2">🌐 Enhanced with real-world context</div>' : '') + '</div>';
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function switchTab(group, btn, tab) {
+  var parent = btn.closest('.page');
+  parent.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  parent.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  var panel = document.getElementById(group + '-tab-' + tab);
+  if (panel) panel.classList.add('active');
+  if (group === 'chapter') {
+    if (tab === 'subtopics') loadSubChapters(currentChapter);
+    if (tab === 'practice')  loadChapterPractice(currentChapter);
+  }
+}
+
+async function loadSubChapters(chapter) {
+  var el = document.getElementById('chapter-tab-subtopics');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div></div>';
+  try {
+    var data = await GET('/api/chapters/' + encodeURIComponent(chapter) + '/sub-chapters');
+    var subs = data.sub_chapters || [];
+    el.innerHTML = '<div class="grid-2">' + subs.map(function(s) {
+      return '<div class="card">' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<strong>' + escHtml(s.name) + '</strong>' +
+          (s.practiced
+            ? '<span class="chapter-status-badge status-strong">✓ DONE</span>'
+            : '<span class="chapter-status-badge status-untouched">' + s.total_attempts + '/' + s.required_attempts + ' needed</span>') +
+        '</div>' +
+        '<div class="text-xs text-muted flex gap-2"><span>📝 ' + s.total_questions + ' Qs</span><span>🎯 ' + s.accuracy + '%</span></div>' +
+        '<div class="progress-bar mt-2"><div class="progress-fill" style="width:' + Math.min(100, Math.round(s.total_attempts / s.required_attempts * 100)) + '%"></div></div>' +
+        '<div class="flex gap-1 mt-2">' +
+          '<button class="btn btn-secondary btn-sm" onclick="openSubLesson(\'' + escHtml(chapter).replace(/'/g,"\\'") + '\',\'' + escHtml(s.name).replace(/'/g,"\\'") + '\')">📖 Learn</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="generateAndPractice(\'' + escHtml(chapter).replace(/'/g,"\\'") + '\',\'' + escHtml(s.name).replace(/'/g,"\\'") + '\')">✏️ Practice</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  } catch(e) { el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>'; }
+}
+
+async function openSubLesson(chapter, subChapter) {
+  openModal('<div><h3 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">📖 ' + escHtml(subChapter) + '</h3><div class="loader"><div class="loader-ring"></div></div></div>');
+  try {
+    var data = await POST('/api/learn', { chapter: chapter, sub_chapter: subChapter });
+    document.getElementById('modal-box').innerHTML =
+      '<div class="flex items-center justify-between mb-2">' +
+        '<h3 style="font-family:\'Syne\',sans-serif">' + escHtml(subChapter) + '</h3>' +
+        '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+      '</div>' +
+      '<div style="white-space:pre-wrap;line-height:1.8;font-size:.92rem;max-height:65vh;overflow-y:auto">' + escHtml(data.content) + '</div>' +
+      (data.used_web ? '<div class="text-xs text-muted mt-2">🌐 Enhanced with real-world context</div>' : '');
+  } catch(e) {
+    document.getElementById('modal-box').innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button>';
+  }
+}
+
+async function generateAndPractice(chapter, subChapter) {
+  var el = document.getElementById('chapter-tab-practice');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Generating questions...</span></div>';
+  document.querySelectorAll('#page-chapter-detail .tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === 2); });
+  document.querySelectorAll('#page-chapter-detail .tab-panel').forEach(function(p, i) { p.classList.toggle('active', i === 2); });
+  try {
+    var data = await POST('/api/questions/generate', { chapter: chapter, sub_chapter: subChapter, count: 10 });
+    chapterQuestions = data.questions || [];
+    chapterAnswers = {}; chapterTimings = {}; chapterStartTimes = {};
+    renderChapterPractice(chapter, subChapter);
+  } catch(e) { el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>'; }
+}
+
+async function loadChapterPractice(chapter) {
+  if (chapterQuestions.length) return;
+  var el = document.getElementById('chapter-tab-practice');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Loading questions...</span></div>';
+  try {
+    var data = await POST('/api/questions/generate', { chapter: chapter, count: 10 });
+    chapterQuestions = data.questions || [];
+    chapterAnswers = {}; chapterTimings = {}; chapterStartTimes = {};
+    renderChapterPractice(chapter);
+  } catch(e) { el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>'; }
+}
+
+function renderChapterPractice(chapter, subChapter) {
+  subChapter = subChapter || '';
+  var el = document.getElementById('chapter-tab-practice');
+  if (!chapterQuestions.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>No questions yet. Generate some above!</p></div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="flex items-center justify-between mb-3">' +
+      '<div><strong>' + chapterQuestions.length + ' Questions</strong> <span class="text-muted text-sm">' + escHtml(subChapter || chapter) + '</span></div>' +
+      '<div class="flex gap-1" id="practice-progress-dots"></div>' +
+    '</div>' +
+    '<div id="chapter-questions-list"></div>' +
+    '<div id="chapter-submit-row" class="hidden mt-3">' +
+      '<button class="btn btn-primary" onclick="submitChapterPractice()">📊 Submit & See Results</button>' +
+    '</div>';
+  renderChapterQuestions();
+}
+
+function renderChapterQuestions() {
+  var container = document.getElementById('chapter-questions-list');
+  if (!container) return;
+  container.innerHTML = chapterQuestions.map(function(q, i) { return renderQuestion(q, i, 'chapter'); }).join('');
+  updatePracticeProgress();
+  var allDone = chapterQuestions.every(function(q) { return chapterAnswers[q.id] !== undefined; });
+  var row = document.getElementById('chapter-submit-row');
+  if (row) row.classList.toggle('hidden', !allDone);
+  chapterQuestions.forEach(function(q) { if (!chapterStartTimes[q.id]) chapterStartTimes[q.id] = Date.now(); });
+}
+
+function renderQuestion(q, idx, mode) {
+  var labels = ['A','B','C','D'];
+  var answered = mode === 'chapter' ? chapterAnswers[q.id] !== undefined : false;
+  var userAns  = mode === 'chapter' ? chapterAnswers[q.id] : undefined;
+  var diffClass = 'diff-' + (q.difficulty || 'medium');
+  var opts = (q.options || []).map(function(opt, oi) {
+    var cls = answered ? 'answered' : '';
+    if (answered) {
+      if (oi === q.correct_answer) cls += ' correct';
+      else if (oi === userAns)     cls += ' wrong';
+    } else if (oi === userAns) cls += ' selected';
+    return '<button class="option-btn ' + cls + '" onclick="answerQuestion(' + q.id + ',' + oi + ',\'' + mode + '\',' + q.correct_answer + ')" ' + (answered ? 'disabled' : '') + '>' +
+      '<span class="option-label">' + labels[oi] + '</span>' +
+      '<span>' + escHtml(opt) + '</span>' +
+    '</button>';
+  }).join('');
+  return '<div class="question-card mb-2" id="qcard-' + q.id + '">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-muted text-sm">Q' + (idx + 1) + '</span>' +
+      '<div class="flex gap-1 items-center">' +
+        '<span class="diff-pill ' + diffClass + '">' + (q.difficulty || 'medium') + '</span>' +
+        '<button class="btn-icon" title="Bookmark" onclick="bookmarkQuestion(' + q.id + ')">🔖</button>' +
+        '<button class="btn-icon" title="Report" onclick="reportQuestion(' + q.id + ')">⚠️</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="question-text">' + escHtml(q.question) + '</div>' +
+    '<div class="options-grid">' + opts + '</div>' +
+    (answered ? '<div class="explanation-box"><strong>💡 Explanation:</strong> ' + escHtml(q.explanation || '') + '</div>' : '') +
+  '</div>';
+}
+
+function answerQuestion(qid, answerIdx, mode, correctAnswer) {
+  if (mode === 'chapter') {
+    if (chapterAnswers[qid] !== undefined) return;
+    var elapsed = Math.round((Date.now() - (chapterStartTimes[qid] || Date.now())) / 1000);
+    chapterTimings[qid] = elapsed;
+    chapterStartTimes[qid] = null;
+    chapterAnswers[qid] = answerIdx;
+    var q   = chapterQuestions.find(function(q) { return q.id === qid; });
+    var idx = chapterQuestions.indexOf(q);
+    if (q) {
+      var card = document.getElementById('qcard-' + qid);
+      if (card) card.outerHTML = renderQuestion(q, idx, 'chapter');
+    }
+    updatePracticeProgress();
+    checkAllAnswered();
+    if (answerIdx !== correctAnswer) {
+      setTimeout(function() { offerCoaching(q, answerIdx); }, 800);
+    }
+  }
+}
+
+function updatePracticeProgress() {
+  var dots = document.getElementById('practice-progress-dots');
+  if (!dots) return;
+  dots.innerHTML = chapterQuestions.map(function(q) {
+    var ans = chapterAnswers[q.id];
+    var cls = 'progress-dot';
+    if (ans !== undefined) cls += ans === q.correct_answer ? ' done-correct' : ' done-wrong';
+    else cls += ' current';
+    return '<div class="' + cls + '"></div>';
+  }).join('');
+}
+
+function checkAllAnswered() {
+  var allDone = chapterQuestions.every(function(q) { return chapterAnswers[q.id] !== undefined; });
+  var row = document.getElementById('chapter-submit-row');
+  if (row) row.classList.toggle('hidden', !allDone);
+}
+
+async function submitChapterPractice() {
+  var answers = {}, time_taken = {};
+  chapterQuestions.forEach(function(q) {
+    if (chapterAnswers[q.id] !== undefined) {
+      answers[q.id]    = chapterAnswers[q.id];
+      time_taken[q.id] = chapterTimings[q.id] || 0;
+    }
+  });
+  try {
+    var data = await POST('/api/test/chapter-practice', { answers: answers, time_taken: time_taken, session_type: 'chapter' });
+    showTestResults(data, 'Chapter Practice');
+    chapterQuestions = [];
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── DAILY TEST ──────────────────────────────────────────────────────────── */
+var dailyTestData    = null;
+var dailyAnswers     = {};
+var dailyTimings     = {};
+var dailyStartTimes  = {};
+var dailyQuestions   = [];
+
+async function loadDailyTest() {
+  var el = document.getElementById('daily-test-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Loading your daily test...</span></div>';
+  dailyAnswers = {}; dailyTimings = {};
+  try {
+    var data = await GET('/api/test/daily');
+    dailyTestData = data;
+    if (!data.test_id && !data.questions?.length) {
+      el.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="empty-icon">📝</div>' +
+          '<p>' + escHtml(data.message || 'No test available') + '</p>' +
+          '<button class="btn btn-primary mt-3" onclick="navigate(\'chapters\')">Go to Chapters</button>' +
+        '</div>';
+      return;
+    }
+    if (data.completed) {
+      showDailyTestCompleted(data);
+    } else {
+      renderDailyTest(data);
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderDailyTest(data) {
+  var el = document.getElementById('daily-test-content');
+  var qs = data.questions || [];
+  qs.forEach(function(q) { dailyStartTimes[q.id] = Date.now(); });
+  el.innerHTML =
+    '<div class="section-header">' +
+      '<div>' +
+        '<h2 class="section-title">📝 Daily Test</h2>' +
+        '<p class="text-muted text-sm">Chapter: ' + escHtml(data.chapter_name || '') + '</p>' +
+      '</div>' +
+      '<div class="flex gap-1 items-center">' +
+        '<div id="daily-progress-dots" class="progress-dots"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div id="daily-questions-list"></div>' +
+    '<div id="daily-submit-row" class="hidden mt-3">' +
+      '<button class="btn btn-primary" onclick="submitDailyTest()">📊 Submit Test</button>' +
+    '</div>';
+  dailyQuestions = qs;
+  dailyAnswers   = {};
+  renderDailyQuestions();
+}
+
+function renderDailyQuestions() {
+  var container = document.getElementById('daily-questions-list');
+  if (!container) return;
+  container.innerHTML = dailyQuestions.map(function(q, i) { return renderDailyQuestion(q, i); }).join('');
+  updateDailyProgress();
+}
+
+function renderDailyQuestion(q, idx) {
+  var labels   = ['A','B','C','D'];
+  var answered = dailyAnswers[q.id] !== undefined;
+  var userAns  = dailyAnswers[q.id];
+  var diffClass = 'diff-' + (q.difficulty || 'medium');
+  var opts = (q.options || []).map(function(opt, oi) {
+    var cls = answered ? 'answered' : '';
+    if (answered) {
+      if (oi === q.correct_answer) cls += ' correct';
+      else if (oi === userAns)     cls += ' wrong';
+    } else if (oi === userAns) cls += ' selected';
+    return '<button class="option-btn ' + cls + '" onclick="answerDailyQuestion(' + q.id + ',' + oi + ',' + q.correct_answer + ')" ' + (answered ? 'disabled' : '') + '>' +
+      '<span class="option-label">' + labels[oi] + '</span>' +
+      '<span>' + escHtml(opt) + '</span>' +
+    '</button>';
+  }).join('');
+  return '<div class="question-card mb-2" id="dqcard-' + q.id + '">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-muted text-sm">Q' + (idx + 1) + ' / ' + dailyQuestions.length + '</span>' +
+      '<div class="flex gap-1 items-center">' +
+        '<span class="diff-pill ' + diffClass + '">' + (q.difficulty || 'medium') + '</span>' +
+        '<button class="btn-icon" onclick="bookmarkQuestion(' + q.id + ')">🔖</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="question-text">' + escHtml(q.question) + '</div>' +
+    '<div class="options-grid">' + opts + '</div>' +
+    (answered ? '<div class="explanation-box"><strong>💡 Explanation:</strong> ' + escHtml(q.explanation || '') + '</div>' : '') +
+  '</div>';
+}
+
+function answerDailyQuestion(qid, answerIdx, correctAnswer) {
+  if (dailyAnswers[qid] !== undefined) return;
+  var elapsed = Math.round((Date.now() - (dailyStartTimes[qid] || Date.now())) / 1000);
+  dailyTimings[qid] = elapsed;
+  dailyAnswers[qid] = answerIdx;
+  var q   = dailyQuestions.find(function(q) { return q.id === qid; });
+  var idx = dailyQuestions.indexOf(q);
+  if (q) {
+    var card = document.getElementById('dqcard-' + qid);
+    if (card) card.outerHTML = renderDailyQuestion(q, idx);
+  }
+  updateDailyProgress();
+  var allDone = dailyQuestions.every(function(q) { return dailyAnswers[q.id] !== undefined; });
+  var row = document.getElementById('daily-submit-row');
+  if (row) row.classList.toggle('hidden', !allDone);
+  if (answerIdx !== correctAnswer) {
+    setTimeout(function() { offerCoaching(q, answerIdx); }, 800);
+  }
+}
+
+function updateDailyProgress() {
+  var dots = document.getElementById('daily-progress-dots');
+  if (!dots) return;
+  dots.innerHTML = dailyQuestions.map(function(q) {
+    var ans = dailyAnswers[q.id];
+    var cls = 'progress-dot';
+    if (ans !== undefined) cls += ans === q.correct_answer ? ' done-correct' : ' done-wrong';
+    return '<div class="' + cls + '"></div>';
+  }).join('');
+}
+
+async function submitDailyTest() {
+  if (!dailyTestData) return;
+  var answers = {}, time_taken = {};
+  dailyQuestions.forEach(function(q) {
+    if (dailyAnswers[q.id] !== undefined) {
+      answers[q.id]    = dailyAnswers[q.id];
+      time_taken[q.id] = dailyTimings[q.id] || 0;
+    }
+  });
+  try {
+    var data = await POST('/api/test/submit', { test_id: dailyTestData.test_id, answers: answers, time_taken: time_taken, session_type: 'daily' });
+    showTestResults(data, 'Daily Test');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function showDailyTestCompleted(data) {
+  var pct   = data.percentage || 0;
+  var color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('daily-test-content').innerHTML =
+    '<div style="max-width:500px;margin:0 auto;text-align:center">' +
+      '<div class="card">' +
+        '<h2 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">✅ Already Completed Today</h2>' +
+        '<div style="font-size:3.5rem;font-weight:900;color:' + color + ';font-family:\'Space Mono\',monospace">' + pct + '%</div>' +
+        '<div class="text-muted mb-2">' + data.score + ' / ' + data.total + ' correct</div>' +
+        '<button class="btn btn-secondary" onclick="loadDailyTest()">View Results</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ── TEST RESULTS ─────────────────────────────────────────────────────────── */
+function showTestResults(data, title) {
+  title = title || 'Test';
+  var pct   = data.percentage || 0;
+  var color = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffd700' : '#ff2d6e';
+  var achs  = (data.new_achievements || []).map(function(a) {
+    return '<div class="achievement-card mt-2">' +
+      '<span class="ach-icon">' + a.icon + '</span>' +
+      '<div class="ach-info"><div class="ach-name">' + escHtml(a.name) + '</div><div class="ach-desc">' + escHtml(a.desc) + '</div></div>' +
+      '<span class="ach-xp">+' + a.xp + ' XP</span>' +
+    '</div>';
+  }).join('');
+  var alerts = (data.latency_alerts || []).map(function(a) {
+    return '<div class="alert alert-warn mt-2">⏱ ' + escHtml(a.message) + '<br><small>' + escHtml(a.tip) + '</small></div>';
+  }).join('');
+  var coachBanner = '';
+  if (data.has_wrong_answers && data.first_coaching_trigger) {
+    var ctx = JSON.stringify(data.first_coaching_trigger).replace(/"/g, '&quot;');
+    coachBanner =
+      '<div class="coaching-banner">' +
+        '<span style="font-size:1.4rem">🎓</span>' +
+        '<div style="flex:1"><strong>Learn from mistakes</strong><div class="text-sm text-muted">You got ' + (data.total - data.score) + ' question(s) wrong</div></div>' +
+        '<button class="btn btn-secondary btn-sm" onclick="closeModal();openTeachMe(' + ctx + ')">Teach Me →</button>' +
+      '</div>';
+  }
+  openModal(
+    '<div>' +
+      '<div class="flex items-center justify-between mb-3">' +
+        '<h2 style="font-family:\'Syne\',sans-serif">' + escHtml(title) + ' Results</h2>' +
+        '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+      '</div>' +
+      '<div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:var(--radius);margin-bottom:1rem">' +
+        '<div style="font-size:3.5rem;font-weight:900;color:' + color + ';font-family:\'Space Mono\',monospace">' + pct + '%</div>' +
+        '<div class="text-muted">' + data.score + ' / ' + data.total + ' correct</div>' +
+        (data.xp_earned ? '<div class="text-yellow mt-1">+' + data.xp_earned + ' XP &nbsp; +' + (data.coins_earned || 0) + ' 🪙</div>' : '') +
+      '</div>' +
+      achs + alerts + coachBanner +
+      '<div class="flex gap-1 mt-3">' +
+        '<button class="btn btn-secondary" onclick="closeModal()">Close</button>' +
+        '<button class="btn btn-primary" onclick="closeModal();navigate(\'analytics\')">View Analytics →</button>' +
+      '</div>' +
+    '</div>'
+  );
+  if (USER) {
+    if (data.xp_earned)    USER.xp    = (USER.xp    || 0) + data.xp_earned;
+    if (data.coins_earned) USER.coins = (USER.coins  || 0) + data.coins_earned;
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    renderNavUser();
+  }
+}
+
+/* ── WEAK SESSION ────────────────────────────────────────────────────────── */
+var weakSessionData = null;
+var weakAnswers     = {};
+var weakTimings     = {};
+var weakStartTimes  = {};
+var weakQuestions   = [];
+
+async function loadWeakSession() {
+  var el = document.getElementById('weak-session-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Finding weak areas...</span></div>';
+  weakAnswers = {}; weakTimings = {};
+  try {
+    var data = await GET('/api/test/weak-session');
+    weakSessionData = data;
+    if (!data.session_id || !data.questions?.length) {
+      el.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="empty-icon">🎉</div>' +
+          '<h3>' + escHtml(data.message || 'No weak areas found!') + '</h3>' +
+          '<p class="text-muted">Great job! All practiced questions are mastered.</p>' +
+          '<button class="btn btn-primary mt-3" onclick="navigate(\'dynamic\')">Try Dynamic Mode →</button>' +
+        '</div>';
+      return;
+    }
+    weakQuestions = data.questions;
+    el.innerHTML =
+      '<div class="section-header">' +
+        '<div><h2 class="section-title">⚡ Weak Area Training</h2>' +
+        '<p class="text-muted text-sm">' + weakQuestions.length + ' questions from your weak areas</p></div>' +
+        '<div class="flex gap-1 items-center"><div id="weak-progress-dots" class="progress-dots"></div></div>' +
+      '</div>' +
+      '<div id="weak-questions-list"></div>' +
+      '<div id="weak-submit-row" class="hidden mt-3">' +
+        '<button class="btn btn-primary" onclick="submitWeakSession()">📊 Submit Session</button>' +
+      '</div>';
+    weakQuestions.forEach(function(q) { weakStartTimes[q.id] = Date.now(); });
+    renderWeakQuestions();
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderWeakQuestions() {
+  var container = document.getElementById('weak-questions-list');
+  if (!container) return;
+  container.innerHTML = weakQuestions.map(function(q, i) { return renderWeakQuestion(q, i); }).join('');
+  updateWeakProgress();
+}
+
+function renderWeakQuestion(q, idx) {
+  var labels   = ['A','B','C','D'];
+  var answered = weakAnswers[q.id] !== undefined;
+  var userAns  = weakAnswers[q.id];
+  var diffClass = 'diff-' + (q.difficulty || 'medium');
+  var opts = (q.options || []).map(function(opt, oi) {
+    var cls = answered ? 'answered' : '';
+    if (answered) {
+      if (oi === q.correct_answer) cls += ' correct';
+      else if (oi === userAns)     cls += ' wrong';
+    } else if (oi === userAns) cls += ' selected';
+    return '<button class="option-btn ' + cls + '" onclick="answerWeakQuestion(' + q.id + ',' + oi + ',' + q.correct_answer + ')" ' + (answered ? 'disabled' : '') + '>' +
+      '<span class="option-label">' + labels[oi] + '</span>' +
+      '<span>' + escHtml(opt) + '</span>' +
+    '</button>';
+  }).join('');
+  return '<div class="question-card mb-2" id="wqcard-' + q.id + '">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-muted text-sm">Q' + (idx + 1) + ' / ' + weakQuestions.length + '</span>' +
+      '<span class="diff-pill ' + diffClass + '">' + (q.difficulty || 'medium') + '</span>' +
+    '</div>' +
+    '<div class="question-text">' + escHtml(q.question) + '</div>' +
+    '<div class="options-grid">' + opts + '</div>' +
+    (answered ? '<div class="explanation-box"><strong>💡 Explanation:</strong> ' + escHtml(q.explanation || '') + '</div>' : '') +
+  '</div>';
+}
+
+function answerWeakQuestion(qid, answerIdx, correctAnswer) {
+  if (weakAnswers[qid] !== undefined) return;
+  var elapsed = Math.round((Date.now() - (weakStartTimes[qid] || Date.now())) / 1000);
+  weakTimings[qid] = elapsed;
+  weakAnswers[qid] = answerIdx;
+  var q   = weakQuestions.find(function(q) { return q.id === qid; });
+  var idx = weakQuestions.indexOf(q);
+  if (q) {
+    var card = document.getElementById('wqcard-' + qid);
+    if (card) card.outerHTML = renderWeakQuestion(q, idx);
+  }
+  updateWeakProgress();
+  var allDone = weakQuestions.every(function(q) { return weakAnswers[q.id] !== undefined; });
+  var row = document.getElementById('weak-submit-row');
+  if (row) row.classList.toggle('hidden', !allDone);
+}
+
+function updateWeakProgress() {
+  var dots = document.getElementById('weak-progress-dots');
+  if (!dots) return;
+  dots.innerHTML = weakQuestions.map(function(q) {
+    var ans = weakAnswers[q.id];
+    var cls = 'progress-dot';
+    if (ans !== undefined) cls += ans === q.correct_answer ? ' done-correct' : ' done-wrong';
+    return '<div class="' + cls + '"></div>';
+  }).join('');
+}
+
+async function submitWeakSession() {
+  if (!weakSessionData?.session_id) return;
+  var answers = {}, time_taken = {};
+  weakQuestions.forEach(function(q) {
+    if (weakAnswers[q.id] !== undefined) {
+      answers[q.id]    = weakAnswers[q.id];
+      time_taken[q.id] = weakTimings[q.id] || 0;
+    }
+  });
+  try {
+    var data = await POST('/api/test/weak-session/submit', { session_id: weakSessionData.session_id, answers: answers, time_taken: time_taken });
+    showTestResults(data, 'Weak Training');
+    weakSessionData = null;
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── DYNAMIC MODE ────────────────────────────────────────────────────────── */
+var dynamicSession        = null;
+var dynamicCurrentAttempt = null;
+var dynamicAttemptStart   = null;
+
+async function loadDynamic() {
+  var el = document.getElementById('dynamic-content');
+  el.innerHTML =
+    '<div style="max-width:600px;margin:0 auto">' +
+      '<div class="section-header"><h2 class="section-title">🌀 Dynamic Mode</h2></div>' +
+      '<div class="card mb-2">' +
+        '<div class="card-title">Infinite AI-Generated Questions</div>' +
+        '<p class="text-muted text-sm mb-3">Questions are generated on-the-fly. Answer as many as you want — stop anytime!</p>' +
+        '<div class="form-group">' +
+          '<label>Focus Chapter <span class="text-muted">(optional)</span></label>' +
+          '<select id="dynamic-chapter-select" class="form-input"><option value="">All Topics</option></select>' +
+        '</div>' +
+        '<button class="btn btn-primary" onclick="startDynamicSession()">🚀 Start Dynamic Session</button>' +
+      '</div>' +
+      '<div id="dynamic-history-block"></div>' +
+    '</div>';
+  try {
+    var data = await GET('/api/exam/chapters');
+    var sel  = document.getElementById('dynamic-chapter-select');
+    if (sel) {
+      (data.chapters || []).filter(function(c) { return c.unlocked; }).forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c.name; opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    }
+  } catch(e) {}
+  loadDynamicHistory();
+}
+
+async function loadDynamicHistory() {
+  try {
+    var data     = await GET('/api/session/dynamic/history');
+    var sessions = (data.sessions || []).slice(0, 5);
+    var el = document.getElementById('dynamic-history-block');
+    if (!el || !sessions.length) return;
+    el.innerHTML = '<div class="card"><div class="card-title">Recent Sessions</div>' +
+      sessions.map(function(s) {
+        return '<div class="lb-row mb-1">' +
+          '<div style="flex:1"><strong>' + escHtml(s.chapter || 'All Topics') + '</strong><div class="text-xs text-muted">' + (s.created_at || '').split('T')[0] + '</div></div>' +
+          '<span class="mono text-cyan">' + s.score + '/' + s.total + '</span>' +
+          '<span class="text-sm text-muted">' + s.percentage + '%</span>' +
+        '</div>';
+      }).join('') + '</div>';
+  } catch(e) {}
+}
+
+async function startDynamicSession() {
+  var chapter = (document.getElementById('dynamic-chapter-select') || {}).value || null;
+  var el = document.getElementById('dynamic-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Starting session...</span></div>';
+  try {
+    var data = await POST('/api/session/dynamic/start', { chapter: chapter });
+    dynamicSession = data;
+    renderDynamicSession(chapter);
+    loadNextDynamicQuestion();
+  } catch(e) { toast(e.message, 'error'); loadDynamic(); }
+}
+
+function renderDynamicSession(chapter) {
+  var el = document.getElementById('dynamic-content');
+  el.innerHTML =
+    '<div style="max-width:700px;margin:0 auto">' +
+      '<div class="section-header">' +
+        '<div>' +
+          '<h2 class="section-title">🌀 Dynamic: ' + escHtml(chapter || 'All Topics') + '</h2>' +
+          '<div class="flex gap-2 items-center" id="dynamic-score-display">' +
+            '<span class="mono text-cyan">Score: 0/0</span>' +
+          '</div>' +
+        '</div>' +
+        '<button class="btn btn-danger btn-sm" onclick="stopDynamic()">⏹ Stop Session</button>' +
+      '</div>' +
+      '<div id="dynamic-question-area"><div class="loader"><div class="loader-ring"></div></div></div>' +
+    '</div>';
+}
+
+async function loadNextDynamicQuestion() {
+  if (!dynamicSession) return;
+  var el = document.getElementById('dynamic-question-area');
+  if (el) el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Generating next question...</span></div>';
+  try {
+    var data = await GET('/api/session/dynamic/' + dynamicSession.session_id + '/next');
+    dynamicCurrentAttempt = data;
+    dynamicAttemptStart   = Date.now();
+    renderDynamicQuestion(data);
+    updateDynamicScore(data.running_score, data.running_total);
+  } catch(e) {
+    var el2 = document.getElementById('dynamic-question-area');
+    if (el2) el2.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="stopDynamic()">End Session</button></div>';
+  }
+}
+
+function renderDynamicQuestion(data) {
+  var labels = ['A','B','C','D'];
+  var el = document.getElementById('dynamic-question-area');
+  if (!el) return;
+  el.innerHTML =
+    '<div class="question-card">' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<span class="text-muted text-sm">Dynamic Q</span>' +
+        '<span class="diff-pill diff-hard">HARD</span>' +
+      '</div>' +
+      '<div class="question-text">' + escHtml(data.question) + '</div>' +
+      '<div class="options-grid" id="dynamic-options">' +
+        (data.options || []).map(function(opt, oi) {
+          return '<button class="option-btn" onclick="answerDynamic(' + oi + ',' + data.attempt_id + ')">' +
+            '<span class="option-label">' + labels[oi] + '</span>' +
+            '<span>' + escHtml(opt) + '</span>' +
+          '</button>';
+        }).join('') +
+      '</div>' +
+      '<div id="dynamic-result" class="hidden"></div>' +
+      '<div class="flex justify-end mt-2"><button class="btn btn-secondary btn-sm" onclick="loadNextDynamicQuestion()">Skip →</button></div>' +
+    '</div>';
+}
+
+async function answerDynamic(answerIdx, attemptId) {
+  var timeTaken = Math.round((Date.now() - (dynamicAttemptStart || Date.now())) / 1000);
+  document.querySelectorAll('#dynamic-options .option-btn').forEach(function(b) {
+    b.disabled = true; b.classList.add('answered');
+  });
+  try {
+    var data = await POST('/api/session/dynamic/answer', { attempt_id: attemptId, user_answer: answerIdx, time_taken: timeTaken });
+    document.querySelectorAll('#dynamic-options .option-btn').forEach(function(btn, i) {
+      if (i === data.correct_answer) btn.classList.add('correct');
+      else if (i === answerIdx && !data.is_correct) btn.classList.add('wrong');
+    });
+    var resultEl = document.getElementById('dynamic-result');
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML =
+        '<div class="explanation-box">' +
+          '<strong>' + (data.is_correct ? '✅ Correct!' : '❌ Wrong!') + '</strong> +' + data.xp_earned + ' XP' +
+          '<br>' + escHtml(data.explanation || '') +
+          (data.latency_alert ? '<div class="alert alert-warn mt-1">⏱ ' + escHtml(data.latency_alert.message) + '</div>' : '') +
+        '</div>' +
+        '<button class="btn btn-primary mt-2" onclick="loadNextDynamicQuestion()">Next Question →</button>';
+    }
+    updateDynamicScore(data.running_score, data.running_total);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function updateDynamicScore(score, total) {
+  var el = document.getElementById('dynamic-score-display');
+  if (!el) return;
+  var pct   = total > 0 ? Math.round(score / total * 100) : 0;
+  var color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+  el.innerHTML = '<span class="mono" style="color:' + color + '">' + score + '/' + total + ' &nbsp;(' + pct + '%)</span>';
+}
+
+async function stopDynamic() {
+  if (!dynamicSession?.session_id) { loadDynamic(); return; }
+  try {
+    var data = await POST('/api/session/dynamic/stop', { session_id: dynamicSession.session_id });
+    dynamicSession = null;
+    var pct   = data.percentage || 0;
+    var color = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffd700' : '#ff2d6e';
+    openModal(
+      '<div>' +
+        '<h2 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">🌀 Session Complete</h2>' +
+        '<div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:var(--radius);margin-bottom:1rem">' +
+          '<div style="font-size:3rem;font-weight:900;color:' + color + ';font-family:\'Space Mono\',monospace">' + pct + '%</div>' +
+          '<div class="text-muted">' + data.score + '/' + data.total + ' correct</div>' +
+          '<div class="text-yellow">+' + (data.bonus_xp || 0) + ' Bonus XP</div>' +
+        '</div>' +
+        (data.new_achievements || []).map(function(a) {
+          return '<div class="achievement-card mt-1"><span class="ach-icon">' + a.icon + '</span><div class="ach-info"><div class="ach-name">' + escHtml(a.name) + '</div></div><span class="ach-xp">+' + a.xp + ' XP</span></div>';
+        }).join('') +
+        '<div class="flex gap-1 mt-3">' +
+          '<button class="btn btn-secondary" onclick="closeModal();loadDynamic()">New Session</button>' +
+          '<button class="btn btn-primary" onclick="closeModal();navigate(\'analytics\')">Analytics →</button>' +
+        '</div>' +
+      '</div>'
+    );
+  } catch(e) { toast(e.message, 'error'); loadDynamic(); }
+}
+
+/* ── COACH ────────────────────────────────────────────────────────────────── */
+var coachMessages = [];
+async function loadCoach() {
+  coachMessages = [];
+  try {
+    var ins = await GET('/api/coach/daily-insight');
+    document.getElementById('coach-daily-insight').innerHTML =
+      '<div class="card-title">🔮 Today\'s Insight</div>' +
+      '<p style="line-height:1.7">' + escHtml(ins.insight || 'Keep studying!') + '</p>';
+  } catch(e) {
+    document.getElementById('coach-daily-insight').innerHTML = '<p class="text-muted">Start practicing to get personalized insights!</p>';
+  }
+  try {
+    var hist = await GET('/api/coach/history?limit=20');
+    coachMessages = hist.messages || [];
+    renderCoachChat();
+  } catch(e) {}
+  loadFailedQuestions();
+}
+
+function renderCoachChat() {
+  var container = document.getElementById('coach-chat-messages');
+  if (!container) return;
+  if (!coachMessages.length) {
+    container.innerHTML = '<div class="chat-msg coach">Hi! I\'m your AI exam coach. Ask me anything about your studies! 👋</div>';
+    return;
+  }
+  container.innerHTML = coachMessages.map(function(m) {
+    return '<div class="chat-msg ' + (m.type === 'user' ? 'user' : 'coach') + '">' + escHtml(m.message) + '</div>';
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendCoachMessage() {
+  var input = document.getElementById('coach-input');
+  var msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  coachMessages.push({ type: 'user', message: msg });
+  renderCoachChat();
+  var container = document.getElementById('coach-chat-messages');
+  var thinking  = document.createElement('div');
+  thinking.className   = 'chat-msg coach';
+  thinking.innerHTML   = '<span class="spin">⏳</span> Thinking...';
+  container.appendChild(thinking);
+  container.scrollTop = container.scrollHeight;
+  try {
+    var data = await POST('/api/coach/chat', { message: msg });
+    thinking.remove();
+    coachMessages.push({ type: 'coach', message: data.response });
+    renderCoachChat();
+    if (data.new_achievements && data.new_achievements.length) {
+      toast('🏆 Achievement unlocked: ' + data.new_achievements[0].name + '!', 'success');
+    }
+  } catch(e) {
+    thinking.remove();
+    toast(e.message, 'error');
+  }
+}
+
+async function loadLatencyCoach() {
+  openModal('<div class="loader"><div class="loader-ring"></div><span class="text-muted">Analyzing your speed...</span></div>');
+  try {
+    var data = await POST('/api/latency/coach-advice', {});
+    openModal(
+      '<div>' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<h3 style="font-family:\'Syne\',sans-serif">⏱ Speed Coach</h3>' +
+          '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+        '</div>' +
+        '<div class="alert alert-info mb-2">' +
+          '<div><strong>Avg time:</strong> ' + (data.stats_summary && data.stats_summary.avg_time || 0) + 's/question &nbsp;' +
+          '<strong>Trend:</strong> ' + (data.stats_summary && data.stats_summary.trend || 'no data') + '</div>' +
+        '</div>' +
+        '<p style="line-height:1.7">' + escHtml(data.advice || '') + '</p>' +
+        (data.alerts && data.alerts.length ? data.alerts.map(function(a) { return '<div class="alert alert-warn mt-2">' + escHtml(a.message) + '</div>'; }).join('') : '') +
+        '<div class="alert alert-ok mt-2">🎯 ' + escHtml(data.drill || '') + '</div>' +
+      '</div>'
+    );
+  } catch(e) {
+    openModal('<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button></div>');
+  }
+}
+
+async function loadFailedQuestions() {
+  var el = document.getElementById('failed-questions-list');
+  if (!el) return;
+  try {
+    var data = await GET('/api/coach/teach-me/failed-questions');
+    var qs   = data.questions || [];
+    if (!qs.length) { el.innerHTML = '<p class="text-muted text-sm">No failed questions yet — keep practicing!</p>'; return; }
+    el.innerHTML = qs.map(function(q) {
+      return '<div class="flex items-center gap-2 mb-2 p-3" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">' +
+        '<div style="flex:1">' +
+          '<div class="text-sm">' + escHtml(q.question.substring(0, 80)) + '...</div>' +
+          '<div class="text-xs text-muted">' + escHtml(q.chapter) + ' • ❌ ' + q.wrong_count + ' wrong</div>' +
+        '</div>' +
+        '<button class="btn btn-secondary btn-sm" onclick="openTeachMeFromQuestion(' + q.id + ',' + (q.last_user_answer || 0) + ')">📖 Teach Me</button>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+function openTeachMeFromQuestion(qid, lastAns) {
+  openTeachMe({ question_id: qid, user_answer: lastAns });
+}
+
+async function openTeachMe(ctx) {
+  openModal('<div class="loader"><div class="loader-ring"></div><span class="text-muted">Setting up lesson...</span></div>');
+  try {
+    var body = ctx.question_id
+      ? { question_id: ctx.question_id, user_answer: ctx.user_answer || 0 }
+      : { question_text: ctx.question_text, options: ctx.options, correct_answer: ctx.correct_answer,
+          user_answer: ctx.user_answer, explanation: ctx.explanation, chapter: ctx.chapter };
+    var data = await POST('/api/coach/teach-me', body);
+    renderTeachMeModal(data);
+  } catch(e) {
+    openModal('<div class="alert alert-err">' + escHtml(e.message) + '</div><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button>');
+  }
+}
+
+function renderTeachMeModal(data) {
+  var labels = ['A','B','C','D'];
+  openModal(
+    '<div>' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<h3 style="font-family:\'Syne\',sans-serif">📖 Teach Me</h3>' +
+        '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+      '</div>' +
+      '<div class="card mb-2">' +
+        '<div class="text-sm font-bold mb-1">' + escHtml(data.question || '') + '</div>' +
+        (data.options || []).map(function(o, i) {
+          var cls = i === data.correct_answer ? 'text-green' : (i === data.user_answer && i !== data.correct_answer ? 'text-red' : 'text-muted');
+          return '<div class="text-sm ' + cls + '">' + labels[i] + '. ' + escHtml(o) + '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="chat-container" id="teach-chat" style="max-height:250px">' +
+        '<div class="chat-msg coach">' + escHtml(data.opening || '') + '</div>' +
+      '</div>' +
+      '<div class="chat-input-row mt-2">' +
+        '<input type="text" class="chat-input" id="teach-input" placeholder="Ask a follow-up..." onkeydown="if(event.key===\'Enter\')sendTeachReply(' + data.session_id + ')"/>' +
+        '<button class="btn btn-primary btn-sm" onclick="sendTeachReply(' + data.session_id + ')">Send →</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+async function sendTeachReply(sessionId) {
+  var input = document.getElementById('teach-input');
+  var msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  var chat = document.getElementById('teach-chat');
+  if (chat) {
+    chat.innerHTML += '<div class="chat-msg user">' + escHtml(msg) + '</div>';
+    chat.innerHTML += '<div class="chat-msg coach" id="teach-thinking"><span class="spin">⏳</span></div>';
+    chat.scrollTop = chat.scrollHeight;
+  }
+  try {
+    var data = await POST('/api/coach/teach-me/reply', { session_id: sessionId, message: msg });
+    var t    = document.getElementById('teach-thinking');
+    if (t) t.outerHTML = '<div class="chat-msg coach">' + escHtml(data.response || '') + '</div>';
+    if (chat) chat.scrollTop = chat.scrollHeight;
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function offerCoaching(question, userAnswer) {
+  if (!question) return;
+  var card = document.getElementById('qcard-' + question.id) ||
+             document.getElementById('dqcard-' + question.id) ||
+             document.getElementById('wqcard-' + question.id);
+  if (card) {
+    var banner = document.createElement('div');
+    banner.className = 'coaching-banner';
+    var ctx = JSON.stringify({ question_id: question.id, user_answer: userAnswer }).replace(/"/g, '&quot;');
+    banner.innerHTML =
+      '<span style="font-size:1.2rem">🎓</span>' +
+      '<div style="flex:1"><strong>Want to understand this?</strong><div class="text-xs text-muted">Your coach can explain</div></div>' +
+      '<button class="btn btn-secondary btn-sm" onclick="openTeachMe(' + ctx + ')">Teach Me</button>';
+    card.appendChild(banner);
+  }
+}
+
+/* ── ANALYTICS ───────────────────────────────────────────────────────────── */
+async function loadAnalytics() {
+  var el = document.getElementById('analytics-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div><span class="text-muted">Loading analytics...</span></div>';
+  try {
+    var data = await GET('/api/analytics');
+    renderAnalytics(data);
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderAnalytics(data) {
+  var ov  = data.overview || {};
+  var el  = document.getElementById('analytics-content');
+  var pct = ov.total_attempted ? Math.round(ov.total_correct / ov.total_attempted * 100) : 0;
+  var color = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffd700' : '#ff2d6e';
+
+  var chPerf = (data.chapter_performance || []).filter(function(c) { return c.attempted > 0; });
+  var maxAcc = Math.max.apply(null, chPerf.map(function(c) { return c.accuracy; }).concat([1]));
+  var chBars = chPerf.slice(0, 8).map(function(c) {
+    var barColor = c.accuracy >= 75 ? 'var(--green)' : c.accuracy >= 50 ? 'var(--yellow)' : 'var(--red)';
+    return '<div class="bar-col" title="' + escHtml(c.chapter) + ': ' + c.accuracy + '%">' +
+      '<div class="bar-fill" style="height:' + Math.max(4, Math.round(c.accuracy / maxAcc * 90)) + 'px;background:' + barColor + '"></div>' +
+      '<div class="bar-label">' + escHtml(c.chapter.substring(0, 8)) + '</div>' +
+    '</div>';
+  }).join('');
+
+  var dailyHist = (data.daily_history || []).slice(0, 7).reverse();
+  var dailyBars = dailyHist.map(function(d) {
+    return '<div class="bar-col" title="' + (d.test_date || '') + ': ' + d.percentage + '%">' +
+      '<div class="bar-fill" style="height:' + Math.max(4, Math.round(d.percentage / 100 * 90)) + 'px"></div>' +
+      '<div class="bar-label">' + (d.test_date ? d.test_date.slice(5) : '') + '</div>' +
+    '</div>';
+  }).join('');
+
+  var dynStats = data.dynamic_stats || {};
+  var latency  = data.latency || {};
+
+  el.innerHTML =
+    '<div class="grid-4 mb-3">' +
+      [
+        {v: ov.total_attempted || 0,          l: 'Total Questions', icon: '📝'},
+        {v: (ov.overall_accuracy || 0) + '%', l: 'Overall Accuracy', icon: '🎯'},
+        {v: ov.streak || 0,                   l: 'Day Streak',       icon: '🔥'},
+        {v: ov.level || 1,                    l: 'Current Level',    icon: '⭐'},
+        {v: ov.tests_completed || 0,          l: 'Tests Done',       icon: '✅'},
+        {v: ov.weak_sessions_done || 0,       l: 'Weak Sessions',    icon: '⚡'},
+        {v: (ov.chapters_complete || 0) + '/' + (ov.chapters_total || 0), l: 'Chapters Done', icon: '📚'},
+        {v: ov.coins || 0,                    l: 'Coins',            icon: '🪙'},
+      ].map(function(s) {
+        return '<div class="stat-badge"><div class="stat-value">' + s.v + '</div><div class="stat-label">' + s.icon + ' ' + s.l + '</div></div>';
+      }).join('') +
+    '</div>' +
+
+    '<div class="grid-2 mb-3">' +
+      '<div class="card" style="display:flex;flex-direction:column;align-items:center">' +
+        '<div class="card-title">Overall Accuracy</div>' +
+        '<svg width="120" height="120" style="transform:rotate(-90deg)">' +
+          '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface2)" stroke-width="10"/>' +
+          '<circle cx="60" cy="60" r="52" fill="none" stroke="' + color + '" stroke-width="10" ' +
+            'stroke-dasharray="' + (2 * Math.PI * 52) + '" ' +
+            'stroke-dashoffset="' + (2 * Math.PI * 52 * (1 - pct / 100)) + '" ' +
+            'style="transition:stroke-dashoffset 1s ease"/>' +
+        '</svg>' +
+        '<div style="margin-top:-90px;text-align:center;font-family:\'Space Mono\',monospace">' +
+          '<div style="font-size:1.8rem;font-weight:700;color:' + color + '">' + pct + '%</div>' +
+          '<div class="text-xs text-muted">' + (ov.total_correct || 0) + '/' + (ov.total_attempted || 0) + '</div>' +
+        '</div>' +
+        '<div style="height:80px"></div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="card-title">🌀 Dynamic Stats</div>' +
+        [
+          {l:'Sessions',       v: dynStats.sessions_completed || 0},
+          {l:'Questions',      v: dynStats.total_questions    || 0},
+          {l:'Accuracy',       v: (dynStats.overall_accuracy  || 0) + '%'},
+          {l:'Best Session',   v: (dynStats.best_session_pct  || 0) + '%'},
+          {l:'Longest Session',v: (dynStats.longest_session_q || 0) + ' Qs'},
+        ].map(function(s) {
+          return '<div class="flex justify-between text-sm mb-1"><span class="text-muted">' + s.l + '</span><span class="mono text-cyan">' + s.v + '</span></div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="grid-2 mb-3">' +
+      '<div class="card"><div class="card-title">Chapter Performance</div>' +
+        (chPerf.length ? '<div class="bar-chart">' + chBars + '</div>' : '<p class="text-muted text-sm">No data yet</p>') +
+      '</div>' +
+      '<div class="card"><div class="card-title">Daily Test History</div>' +
+        (dailyHist.length ? '<div class="bar-chart">' + dailyBars + '</div>' : '<p class="text-muted text-sm">No tests yet</p>') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card mb-3">' +
+      '<div class="card-title">⏱ Decision Speed</div>' +
+      '<div class="grid-4">' +
+        [
+          {v: ((latency.stats || {}).avg_time   || 0) + 's', l:'Avg Time',        icon:'📊'},
+          {v: (latency.stats  || {}).slow_count || 0,         l:'Slow Questions',  icon:'🐢'},
+          {v: (latency.stats  || {}).fast_count || 0,         l:'Fast Questions',  icon:'⚡'},
+          {v: (latency.stats  || {}).trend      || 'No data', l:'Trend',           icon:'📈'},
+        ].map(function(s) {
+          return '<div class="stat-badge"><div class="stat-value mono" style="font-size:1.1rem">' + s.v + '</div><div class="stat-label">' + s.icon + ' ' + s.l + '</div></div>';
+        }).join('') +
+      '</div>' +
+      ((latency.alerts || []).map(function(a) {
+        return '<div class="alert alert-warn mt-2">' + escHtml(a.message) + '<br><small class="text-muted">' + escHtml(a.tip) + '</small></div>';
+      }).join('')) +
+    '</div>' +
+
+    (data.weak_areas && data.weak_areas.length ? (
+      '<div class="card mb-3">' +
+        '<div class="card-title">⚡ Weak Areas</div>' +
+        data.weak_areas.slice(0, 5).map(function(q) {
+          return '<div class="flex items-center gap-2 mb-2" style="padding:.75rem;background:var(--surface);border-radius:var(--radius);border:1px solid rgba(255,45,110,.15)">' +
+            '<div style="flex:1"><div class="text-sm">' + escHtml(q.question.substring(0, 80)) + '...</div><div class="text-xs text-muted">' + escHtml(q.chapter) + '</div></div>' +
+            '<span class="text-red mono text-xs">❌ ' + q.wrong_count + '</span>' +
+          '</div>';
+        }).join('') +
+        '<button class="btn btn-secondary btn-sm mt-1" onclick="navigate(\'weak-session\')">Practice Weak Areas →</button>' +
+      '</div>'
+    ) : '') +
+
+    (data.achievements && data.achievements.length ? (
+      '<div class="card mb-3">' +
+        '<div class="card-title">🏆 Achievements (' + data.achievements.length + ')</div>' +
+        '<div class="grid-2">' +
+          data.achievements.slice(0, 8).map(function(a) {
+            return '<div class="achievement-card">' +
+              '<span class="ach-icon">' + a.icon + '</span>' +
+              '<div class="ach-info"><div class="ach-name">' + escHtml(a.name) + '</div><div class="ach-desc">' + escHtml(a.desc) + '</div></div>' +
+              '<span class="ach-xp">+' + a.xp + '</span>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>'
+    ) : '');
+}
+
+/* ── GLOBAL TESTS ─────────────────────────────────────────────────────────── */
+async function loadGlobalTests() {
+  var el = document.getElementById('global-tests-list');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div></div>';
+  try {
+    var data  = await GET('/api/global-tests');
+    var tests = data.tests || [];
+    if (!tests.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌍</div><p>No global tests available right now. Check back later!</p></div>';
+      return;
+    }
+    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem">' +
+      tests.map(function(t) { return renderGlobalTestCard(t); }).join('') + '</div>';
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderGlobalTestCard(t) {
+  var statusMap = { live:'status-live', lobby:'status-lobby', ended:'status-ended', draft:'status-draft', ready:'status-lobby' };
+  var stCls     = statusMap[t.status] || 'status-draft';
+  var stLabel   = (t.status || 'DRAFT').toUpperCase();
+  var myPart    = t.my_participation || {};
+  var actions   = '';
+  if (myPart.submitted) {
+    actions = '<div class="alert alert-ok text-sm mb-2">✅ You scored ' + (myPart.score || 0) + ' • Rank #' + (myPart.rank || '—') + '</div>' +
+      '<button class="btn btn-secondary btn-sm w-full" onclick="viewGlobalLeaderboard(' + t.id + ')">View Leaderboard</button>';
+  } else if (myPart.joined && t.status === 'live') {
+    actions = '<button class="btn btn-primary w-full" onclick="enterGlobalTestRoom(' + t.id + ')">▶ Enter Test</button>';
+  } else if (myPart.joined) {
+    actions = '<div class="alert alert-info text-sm mb-2">✅ Registered — waiting for test to go live</div>' +
+      '<button class="btn btn-secondary btn-sm" onclick="viewGlobalStatus(' + t.id + ')">Check Status</button>';
+  } else if (t.status === 'ended') {
+    actions = '<button class="btn btn-secondary btn-sm w-full" onclick="viewGlobalLeaderboard(' + t.id + ')">View Results</button>';
+  } else {
+    actions = '<button class="btn btn-primary w-full" onclick="joinGlobalTest(' + t.id + ')">Join Test</button>';
+  }
+  return '<div class="global-test-card">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="status-badge ' + stCls + '">' + (t.status === 'live' ? '● ' : '') + stLabel + '</span>' +
+      '<span class="text-xs text-muted">' + escHtml(t.exam_type || 'General') + '</span>' +
+    '</div>' +
+    '<h3 style="font-family:\'Syne\',sans-serif;margin-bottom:.5rem">' + escHtml(t.title) + '</h3>' +
+    '<p class="text-muted text-sm mb-2">Topic: ' + escHtml(t.topic || '') + ' • ' + (t.question_count || 0) + ' Questions • ' + (t.duration_minutes || 60) + ' min</p>' +
+    '<div class="flex items-center justify-between text-xs text-muted mb-3">' +
+      '<span>👥 ' + t.participant_count + ' participants</span>' +
+      (t.winner_name ? '<span>🏆 ' + escHtml(t.winner_name) + ' won</span>' : '') +
+    '</div>' +
+    actions +
+  '</div>';
+}
+
+async function joinGlobalTest(testId) {
+  try {
+    var data = await POST('/api/global-tests/join', { global_test_id: testId });
+    toast(data.message || 'Joined!', 'success');
+    loadGlobalTests();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function enterGlobalTestRoom(testId) {
+  navigate('global-test-room', { testId: testId });
+  loadGlobalTestRoom(testId);
+}
+
+async function loadGlobalTestRoom(testId) {
+  var el = document.getElementById('global-test-room-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div></div>';
+  try {
+    var data = await GET('/api/global-tests/' + testId + '/questions');
+    renderGlobalTestRoom(data, testId);
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="navigate(\'global-tests\')">Back</button></div>';
+  }
+}
+
+var globalAnswers = {};
+var globalTimer   = null;
+
+function renderGlobalTestRoom(data, testId) {
+  globalAnswers = {};
+  var qs  = data.questions || [];
+  var el  = document.getElementById('global-test-room-content');
+  var sec = data.seconds_remaining || (data.duration_minutes || 60) * 60;
+  var mm  = Math.floor(sec / 60);
+  var ss  = String(sec % 60).padStart(2, '0');
+  el.innerHTML =
+    '<div style="max-width:800px;margin:0 auto">' +
+      '<div class="section-header">' +
+        '<div><h2 class="section-title">' + escHtml(data.title || 'Global Test') + '</h2>' +
+        '<p class="text-muted text-sm">' + qs.length + ' questions • ' + (data.duration_minutes || 60) + ' min</p></div>' +
+        '<div class="flex gap-1 items-center">' +
+          '<div class="timer-badge" id="global-timer">⏱ ' + mm + ':' + ss + '</div>' +
+          '<button class="btn btn-primary btn-sm" onclick="submitGlobalTest(' + testId + ')">Submit →</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="global-questions-list">' + qs.map(function(q, i) { return renderGlobalQuestion(q, i); }).join('') + '</div>' +
+      '<div class="flex gap-1 mt-3">' +
+        '<button class="btn btn-secondary" onclick="navigate(\'global-tests\')">← Exit</button>' +
+        '<button class="btn btn-primary" onclick="submitGlobalTest(' + testId + ')">Submit Test →</button>' +
+      '</div>' +
+    '</div>';
+
+  var secs = sec;
+  if (globalTimer) clearInterval(globalTimer);
+  globalTimer = setInterval(function() {
+    secs--;
+    var timerEl = document.getElementById('global-timer');
+    if (timerEl) {
+      var m = Math.floor(secs / 60), s = secs % 60;
+      timerEl.textContent = '⏱ ' + m + ':' + String(s).padStart(2, '0');
+      timerEl.className   = 'timer-badge' + (secs < 120 ? ' warning' : '') + (secs < 60 ? ' danger' : '');
+    }
+    if (secs <= 0) { clearInterval(globalTimer); submitGlobalTest(testId); }
+  }, 1000);
+}
+
+function renderGlobalQuestion(q, idx) {
+  var labels  = ['A','B','C','D'];
+  var userAns = globalAnswers[q.id];
+  return '<div class="question-card mb-2" id="gqcard-' + q.id + '">' +
+    '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-muted text-sm">Q' + (idx + 1) + '</span>' +
+      '<span class="diff-pill diff-' + (q.difficulty || 'medium') + '">' + (q.difficulty || 'medium') + '</span>' +
+    '</div>' +
+    '<div class="question-text">' + escHtml(q.question) + '</div>' +
+    '<div class="options-grid">' +
+      (q.options || []).map(function(opt, oi) {
+        return '<button class="option-btn ' + (oi === userAns ? 'selected' : '') + '" onclick="answerGlobal(' + q.id + ',' + oi + ',' + idx + ')">' +
+          '<span class="option-label">' + labels[oi] + '</span>' +
+          '<span>' + escHtml(opt) + '</span>' +
+        '</button>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+}
+
+function answerGlobal(qid, answerIdx, idx) {
+  globalAnswers[qid] = answerIdx;
+  var card = document.getElementById('gqcard-' + qid);
+  if (card) {
+    card.querySelectorAll('.option-btn').forEach(function(b, i) {
+      b.classList.toggle('selected', i === answerIdx);
+    });
+  }
+}
+
+async function submitGlobalTest(testId) {
+  if (globalTimer) clearInterval(globalTimer);
+  try {
+    var data = await POST('/api/global-tests/submit', { global_test_id: testId, answers: globalAnswers, time_taken_sec: 0 });
+    var pct  = data.percentage || 0;
+    var color = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffd700' : '#ff2d6e';
+    openModal(
+      '<div>' +
+        '<h2 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">🌍 Global Test Submitted!</h2>' +
+        '<div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:var(--radius)">' +
+          '<div style="font-size:3rem;font-weight:900;color:' + color + ';font-family:\'Space Mono\',monospace">' + pct + '%</div>' +
+          '<div class="text-muted">' + data.score + '/' + data.total + ' • Provisional Rank: #' + (data.provisional_rank || '—') + '</div>' +
+          '<div class="text-yellow">+' + (data.xp_earned || 0) + ' XP</div>' +
+        '</div>' +
+        '<div class="flex gap-1 mt-3">' +
+          '<button class="btn btn-secondary" onclick="closeModal();navigate(\'global-tests\')">Back</button>' +
+          '<button class="btn btn-primary" onclick="viewGlobalLeaderboard(' + testId + ')">Leaderboard →</button>' +
+        '</div>' +
+      '</div>'
+    );
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function viewGlobalLeaderboard(testId) {
+  openModal('<div class="loader"><div class="loader-ring"></div></div>');
+  try {
+    var data = await GET('/api/global-tests/' + testId + '/leaderboard');
+    var rows = data.leaderboard || [];
+    openModal(
+      '<div>' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<h3 style="font-family:\'Syne\',sans-serif">🏆 ' + escHtml((data.test || {}).title || 'Leaderboard') + '</h3>' +
+          '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:.5rem;max-height:400px;overflow-y:auto">' +
+          rows.map(function(r) {
+            return '<div class="lb-row">' +
+              '<div class="lb-rank lb-rank-' + r.rank + '">' + r.rank + '</div>' +
+              '<div class="avatar" style="background:' + (r.avatar_color || '#00e5ff') + '">' + (r.name || '?')[0].toUpperCase() + '</div>' +
+              '<div style="flex:1"><strong>' + escHtml(r.name) + '</strong></div>' +
+              '<span class="mono text-cyan">' + r.score + '/' + r.total + ' (' + r.pct + '%)</span>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="text-xs text-muted mt-2">Total participants: ' + (data.total_participants || 0) + '</div>' +
+      '</div>'
+    );
+  } catch(e) {
+    openModal('<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button></div>');
+  }
+}
+
+async function viewGlobalStatus(testId) {
+  try {
+    var data = await GET('/api/global-tests/' + testId + '/status');
+    toast('Status: ' + data.status + ' • Participants: ' + data.participant_count, 'info');
+    if (data.status === 'live') loadGlobalTests();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── PROFILE ──────────────────────────────────────────────────────────────── */
+async function loadProfile() {
+  var el = document.getElementById('profile-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div></div>';
+  try {
+    var p     = await GET('/api/user/profile');
+    var bests = await GET('/api/user/personal-bests').catch(function() { return {}; });
+    renderProfile(p, bests);
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderProfile(p, bests) {
+  var el     = document.getElementById('profile-content');
+  var stats  = p.stats || {};
+  var xpPct  = p.xp_progress || 0;
+  el.innerHTML =
+    '<div class="card mb-3">' +
+      '<div class="flex items-center gap-3 mb-3">' +
+        '<div class="avatar" style="background:' + (p.avatar_color || '#00e5ff') + ';width:60px;height:60px;font-size:1.5rem">' + (p.name || '?')[0].toUpperCase() + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-family:\'Syne\',sans-serif;font-size:1.25rem;font-weight:700">' + escHtml(p.name) + '</div>' +
+          '<div class="text-muted text-sm">' + escHtml(p.email) + '</div>' +
+          '<div class="text-xs text-muted">' + escHtml(p.exam_type || 'No exam set') + (p.exam_goal ? ' • ' + escHtml(p.exam_goal) : '') + '</div>' +
+        '</div>' +
+        '<button class="btn btn-secondary btn-sm" onclick="showEditProfile()">✏️ Edit</button>' +
+      '</div>' +
+      '<div class="flex items-center gap-2 mb-2">' +
+        '<span class="text-muted text-sm">Lv.' + p.level + '</span>' +
+        '<div class="xp-bar-wrap" style="flex:1"><div class="xp-bar-fill" style="width:' + xpPct + '%"></div></div>' +
+        '<span class="mono text-xs text-cyan">' + p.xp + ' XP</span>' +
+      '</div>' +
+      (p.bio ? '<p class="text-sm text-muted">' + escHtml(p.bio) + '</p>' : '') +
+    '</div>' +
+
+    '<div class="card mb-3">' +
+      '<div class="card-title">📊 Statistics</div>' +
+      '<div class="grid-4">' +
+        [
+          {v: stats.total_attempted || 0,          l: 'Questions', icon: '📝'},
+          {v: (stats.overall_accuracy || 0) + '%', l: 'Accuracy',  icon: '🎯'},
+          {v: stats.study_streak || 0,             l: 'Streak',    icon: '🔥'},
+          {v: stats.chapters_completed || 0,       l: 'Chapters',  icon: '📚'},
+          {v: p.coins || 0,                        l: 'Coins',     icon: '🪙'},
+          {v: stats.bookmarks || 0,                l: 'Bookmarks', icon: '🔖'},
+          {v: stats.global_tests_completed || 0,   l: 'Global Tests', icon: '🌍'},
+          {v: stats.best_global_rank || '—',       l: 'Best Rank', icon: '🏆'},
+        ].map(function(s) {
+          return '<div class="stat-badge"><div class="stat-value">' + s.v + '</div><div class="stat-label">' + s.icon + ' ' + s.l + '</div></div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+
+    (bests && bests.best_daily_test ? (
+      '<div class="card mb-3">' +
+        '<div class="card-title">🥇 Personal Bests</div>' +
+        '<div class="grid-2 text-sm">' +
+          '<div class="alert alert-ok">Best Daily: <strong>' + (bests.best_daily_test.pct || 0) + '%</strong> on ' + escHtml(bests.best_daily_test.test_date || '') + '</div>' +
+          '<div class="alert alert-info">Best Streak: <strong>' + (bests.best_streak_days || 0) + ' days</strong></div>' +
+          (bests.best_dynamic_session ? '<div class="alert alert-ok">Best Dynamic: <strong>' + (bests.best_dynamic_session.pct || 0) + '%</strong></div>' : '') +
+          (bests.best_global_rank ? '<div class="alert alert-info">Best Global Rank: <strong>#' + bests.best_global_rank + '</strong></div>' : '') +
+        '</div>' +
+      '</div>'
+    ) : '') +
+
+    '<div class="card mb-3">' +
+      '<div class="card-title">🏆 Achievements (' + (p.achievements || []).length + ')</div>' +
+      ((p.achievements || []).length ? (
+        '<div class="grid-2">' +
+          (p.achievements || []).map(function(a) {
+            return '<div class="achievement-card">' +
+              '<span class="ach-icon">' + a.icon + '</span>' +
+              '<div class="ach-info"><div class="ach-name">' + escHtml(a.name) + '</div><div class="ach-desc">' + escHtml(a.desc) + '</div></div>' +
+              '<span class="ach-xp">+' + a.xp + '</span>' +
+            '</div>';
+          }).join('') +
+        '</div>'
+      ) : '<p class="text-muted text-sm">No achievements yet — keep studying!</p>') +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="card-title">⚙️ Settings</div>' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<div><div class="font-bold text-sm">Email Reminders</div>' +
+        '<div class="text-xs text-muted">Get morning &amp; evening notifications</div></div>' +
+        '<button class="btn ' + (p.receive_reminders ? 'btn-primary' : 'btn-secondary') + ' btn-sm" onclick="toggleReminders(' + !p.receive_reminders + ')">' +
+          (p.receive_reminders ? '🔔 On' : '🔕 Off') +
+        '</button>' +
+      '</div>' +
+      '<div class="divider"></div>' +
+      '<button class="btn btn-secondary btn-sm" onclick="navigate(\'setup\')">🔄 Change Exam Setup</button>' +
+    '</div>';
+}
+
+function showEditProfile() {
+  openModal(
+    '<div>' +
+      '<div class="flex items-center justify-between mb-3">' +
+        '<h3 style="font-family:\'Syne\',sans-serif">✏️ Edit Profile</h3>' +
+        '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+      '</div>' +
+      '<div class="form-group"><label>Name</label><input type="text" id="edit-name" class="form-input" value="' + escHtml(USER && USER.name || '') + '"/></div>' +
+      '<div class="form-group"><label>Bio</label><input type="text" id="edit-bio" class="form-input" placeholder="Tell us about yourself..."/></div>' +
+      '<div class="form-group"><label>Avatar Color</label><input type="color" id="edit-color" class="form-input" value="' + (USER && USER.avatar_color || '#00e5ff') + '" style="height:44px;cursor:pointer"/></div>' +
+      '<button class="btn btn-primary w-full" onclick="saveProfile()">Save Changes</button>' +
+    '</div>'
+  );
+}
+
+async function saveProfile() {
+  var name         = document.getElementById('edit-name').value.trim();
+  var bio          = document.getElementById('edit-bio').value.trim();
+  var avatar_color = document.getElementById('edit-color').value;
+  try {
+    await PUT('/api/user/profile', { name: name, bio: bio, avatar_color: avatar_color });
+    USER.name = name; USER.avatar_color = avatar_color;
+    localStorage.setItem('examai_user', JSON.stringify(USER));
+    toast('Profile updated!', 'success');
+    closeModal();
+    loadProfile();
+    renderNavUser();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleReminders(enable) {
+  try {
+    await POST('/api/user/notifications', { receive_reminders: enable });
+    toast(enable ? '🔔 Reminders enabled!' : '🔕 Reminders disabled', 'info');
+    loadProfile();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── BOOKMARKS ───────────────────────────────────────────────────────────── */
+async function loadBookmarks() {
+  var el = document.getElementById('bookmarks-content');
+  el.innerHTML = '<div class="loader"><div class="loader-ring"></div></div>';
+  try {
+    var data = await GET('/api/questions/bookmarks');
+    var bm   = data.bookmarks || [];
+    if (!bm.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔖</div><p>No bookmarks yet. Tap 🔖 on any question to bookmark it!</p></div>';
+      return;
+    }
+    var labels = ['A','B','C','D'];
+    el.innerHTML = bm.map(function(b) {
+      var q = b.question || {};
+      return '<div class="question-card mb-2">' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<span class="text-muted text-sm">' + escHtml(q.chapter || '') + '</span>' +
+          '<div class="flex gap-1">' +
+            '<span class="diff-pill diff-' + (q.difficulty || 'medium') + '">' + (q.difficulty || 'medium') + '</span>' +
+            '<button class="btn-icon" onclick="removeBookmark(' + q.id + ')">🗑</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="question-text">' + escHtml(q.question || '') + '</div>' +
+        '<div style="margin-top:.75rem;display:flex;flex-direction:column;gap:.5rem">' +
+          (q.options || []).map(function(opt, oi) {
+            var cls = oi === q.correct_answer ? 'option-btn correct answered' : 'option-btn answered';
+            return '<div class="' + cls + '" style="cursor:default"><span class="option-label">' + labels[oi] + '</span><span>' + escHtml(opt) + '</span></div>';
+          }).join('') +
+        '</div>' +
+        '<div class="explanation-box"><strong>💡 Explanation:</strong> ' + escHtml(q.explanation || '') + '</div>' +
+        (b.note ? '<div class="text-xs text-muted mt-1">Note: ' + escHtml(b.note) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function removeBookmark(qid) {
+  try {
+    await POST('/api/questions/bookmark', { question_id: qid, note: '' });
+    toast('Bookmark removed', 'info');
+    loadBookmarks();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── DAILY CHALLENGE ─────────────────────────────────────────────────────── */
+async function showDailyChallenge() {
+  openModal('<div class="loader"><div class="loader-ring"></div><span class="text-muted">Loading challenge...</span></div>');
+  try {
+    var data   = await GET('/api/challenge/daily');
+    var labels = ['A','B','C','D'];
+    var optionsHtml = '';
+    if (data.completed) {
+      optionsHtml = '<div style="display:flex;flex-direction:column;gap:.5rem">' +
+        (data.options || []).map(function(opt, oi) {
+          var cls = oi === data.correct_answer ? 'option-btn correct answered' :
+                    (oi === data.user_answer && oi !== data.correct_answer ? 'option-btn wrong answered' : 'option-btn answered');
+          return '<div class="' + cls + '" style="cursor:default"><span class="option-label">' + labels[oi] + '</span><span>' + escHtml(opt) + '</span></div>';
+        }).join('') +
+        '</div>' +
+        '<div class="explanation-box mt-2"><strong>💡</strong> ' + escHtml(data.explanation || '') + '</div>' +
+        '<div class="alert alert-ok mt-2">✅ Already completed today!</div>';
+    } else {
+      optionsHtml = '<div class="options-grid" id="challenge-options">' +
+        (data.options || []).map(function(opt, oi) {
+          return '<button class="option-btn" onclick="submitChallenge(' + oi + ')">' +
+            '<span class="option-label">' + labels[oi] + '</span><span>' + escHtml(opt) + '</span>' +
+          '</button>';
+        }).join('') +
+        '</div><div id="challenge-result" class="hidden"></div>';
+    }
+    openModal(
+      '<div>' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<div>' +
+            '<h3 style="font-family:\'Syne\',sans-serif">⚡ Daily Challenge</h3>' +
+            '<div class="text-xs text-muted">' + escHtml(data.challenge_date || '') + ' • ' + escHtml(data.chapter || 'Mixed') + ' • +' + (data.xp_reward || 75) + ' XP</div>' +
+          '</div>' +
+          '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+        '</div>' +
+        '<div class="question-text mb-2">' + escHtml(data.question) + '</div>' +
+        optionsHtml +
+      '</div>'
+    );
+  } catch(e) {
+    openModal('<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button></div>');
+  }
+}
+
+async function submitChallenge(answerIdx) {
+  document.querySelectorAll('#challenge-options .option-btn').forEach(function(b) { b.disabled = true; b.classList.add('answered'); });
+  try {
+    var data     = await POST('/api/challenge/daily/submit', { user_answer: answerIdx });
+    var resultEl = document.getElementById('challenge-result');
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML =
+        '<div class="alert ' + (data.is_correct ? 'alert-ok' : 'alert-err') + ' mt-2">' +
+          (data.is_correct ? '✅ Correct!' : '❌ Wrong!') + ' +' + data.xp_earned + ' XP' +
+        '</div>' +
+        '<div class="explanation-box">' + escHtml(data.explanation || '') + '</div>';
+    }
+    if (data.new_achievements && data.new_achievements.length) toast('🏆 ' + data.new_achievements[0].name + '!', 'success');
+    if (USER) {
+      USER.coins = (USER.coins || 0) + (data.coins_earned || 0);
+      localStorage.setItem('examai_user', JSON.stringify(USER));
+      renderNavUser();
+    }
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── BOOKMARK QUESTION ───────────────────────────────────────────────────── */
+async function bookmarkQuestion(qid) {
+  try {
+    var data = await POST('/api/questions/bookmark', { question_id: qid, note: '' });
+    toast(data.bookmarked ? '🔖 Bookmarked!' : '🗑 Bookmark removed', 'info');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── REPORT QUESTION ─────────────────────────────────────────────────────── */
+function reportQuestion(qid) {
+  openModal(
+    '<div>' +
+      '<h3 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">⚠️ Report Question</h3>' +
+      '<div class="form-group"><label>Reason</label>' +
+        '<select id="report-reason" class="form-input">' +
+          '<option value="wrong_answer">Wrong answer</option>' +
+          '<option value="bad_options">Bad options</option>' +
+          '<option value="unclear">Unclear question</option>' +
+          '<option value="irrelevant">Irrelevant</option>' +
+          '<option value="duplicate">Duplicate</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="flex gap-1">' +
+        '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>' +
+        '<button class="btn btn-danger" onclick="doReport(' + qid + ')">Submit Report</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+async function doReport(qid) {
+  var reason = document.getElementById('report-reason').value;
+  try {
+    await POST('/api/questions/report', { question_id: qid, reason: reason });
+    toast('Report submitted. Thank you!', 'success');
+    closeModal();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── HINT POWERUP ────────────────────────────────────────────────────────── */
+async function useHint(qid, type) {
+  try {
+    var data = await POST('/api/powerup/hint', { question_id: qid, hint_type: type });
+    if (type === 'fifty_fifty') {
+      (data.eliminate || []).forEach(function(idx) {
+        var btns = document.querySelectorAll('#qcard-' + qid + ' .option-btn, #dqcard-' + qid + ' .option-btn, #wqcard-' + qid + ' .option-btn');
+        if (btns[idx]) btns[idx].style.opacity = '0.25';
+      });
+      toast('50/50 used! 2 wrong options eliminated.', 'info');
+    } else {
+      openModal('<div><h3 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">💡 Hint</h3><p style="line-height:1.7">' + escHtml(data.hint || '') + '</p><button class="btn btn-secondary mt-2" onclick="closeModal()">Got it</button></div>');
+    }
+    if (USER) { USER.coins = data.coins_remaining || USER.coins; localStorage.setItem('examai_user', JSON.stringify(USER)); renderNavUser(); }
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── STUDY PLAN ──────────────────────────────────────────────────────────── */
+async function generateStudyPlan() {
+  openModal('<div class="loader"><div class="loader-ring"></div><span class="text-muted">Generating your personalized study plan...</span></div>');
+  try {
+    var data = await POST('/api/study-plan/generate', { daily_hours: 2.0 });
+    openModal(
+      '<div>' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<h3 style="font-family:\'Syne\',sans-serif">📅 Study Plan</h3>' +
+          '<button class="btn-icon" onclick="closeModal()">✕</button>' +
+        '</div>' +
+        '<div style="white-space:pre-wrap;line-height:1.8;font-size:.9rem;max-height:500px;overflow-y:auto">' + escHtml(data.plan || '') + '</div>' +
+      '</div>'
+    );
+  } catch(e) {
+    openModal('<div class="alert alert-err">' + escHtml(e.message) + '<br><button class="btn btn-secondary mt-2" onclick="closeModal()">Close</button></div>');
+  }
+}
+
+/* ── MOOD CHECKIN ────────────────────────────────────────────────────────── */
+function showMoodCheckin() {
+  openModal(
+    '<div>' +
+      '<h3 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">🧠 Mood Check-In</h3>' +
+      '<div class="form-group"><label>Mood (1=low, 5=great)</label>' +
+        '<div class="flex gap-1 mt-1">' +
+          [1,2,3,4,5].map(function(v) {
+            return '<button class="btn btn-secondary" style="flex:1;font-size:1.2rem" onclick="selectMood(' + v + ')" id="mood-btn-' + v + '">' +
+              ['😞','😔','😐','😊','🤩'][v - 1] +
+            '</button>';
+          }).join('') +
+        '</div>' +
+        '<input type="hidden" id="mood-val" value="3"/>' +
+      '</div>' +
+      '<div class="form-group"><label>Energy (1=drained, 5=energized)</label>' +
+        '<input type="range" min="1" max="5" value="3" id="energy-val" class="form-input" style="cursor:pointer"/>' +
+      '</div>' +
+      '<div class="form-group"><label>Note <span class="text-muted">(optional)</span></label>' +
+        '<input type="text" id="mood-note" class="form-input" placeholder="How are you feeling?"/>' +
+      '</div>' +
+      '<button class="btn btn-primary w-full" onclick="submitMood()">Submit</button>' +
+    '</div>'
+  );
+}
+
+function selectMood(v) {
+  document.getElementById('mood-val').value = v;
+  [1,2,3,4,5].forEach(function(i) {
+    var btn = document.getElementById('mood-btn-' + i);
+    if (btn) btn.classList.toggle('btn-primary', i === v);
+  });
+}
+
+async function submitMood() {
+  var mood   = parseInt(document.getElementById('mood-val').value)   || 3;
+  var energy = parseInt(document.getElementById('energy-val').value) || 3;
+  var note   = document.getElementById('mood-note').value;
+  try {
+    var data = await POST('/api/mood/checkin', { mood: mood, energy: energy, note: note });
+    closeModal();
+    openModal(
+      '<div>' +
+        '<h3 style="font-family:\'Syne\',sans-serif;margin-bottom:1rem">🧠 Coach Response</h3>' +
+        '<p style="line-height:1.7">' + escHtml(data.response || '') + '</p>' +
+        '<button class="btn btn-secondary mt-2" onclick="closeModal()">Thanks!</button>' +
+      '</div>'
+    );
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ── HELPERS ─────────────────────────────────────────────────────────────── */
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ── INIT ────────────────────────────────────────────────────────────────── */
+(function init() {
+  if (TOKEN && USER) {
+    document.getElementById('page-auth').style.display = 'none';
+    document.getElementById('nav').classList.remove('hidden');
+    buildNav();
+    if (!USER.setup_done) navigate('setup');
+    else navigate('dashboard');
+  }
+  document.getElementById('login-pass').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('reg-pass').addEventListener('keydown',   function(e) { if (e.key === 'Enter') doRegister(); });
+})();
+</script>
+</body>
+</html>
